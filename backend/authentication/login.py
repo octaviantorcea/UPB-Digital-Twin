@@ -7,7 +7,7 @@ import jwt
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Depends
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm, HTTPAuthorizationCredentials, HTTPBearer
 
 from backend.authentication.database_model import User, get_all_registered_users_as_list
 from backend.authentication.web_model import TokenModel, Token
@@ -18,6 +18,7 @@ BASE_EXPIRE_DELTA = 120
 
 
 load_dotenv()
+security = HTTPBearer()
 
 app = FastAPI()
 
@@ -76,13 +77,18 @@ def login(
 
 
 @app.get("/get_current_user", response_model=TokenModel)
-async def get_current_user(token: str) -> TokenModel:
-    return TokenModel.model_validate(decode_access_token(token))
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+) -> TokenModel:
+    return TokenModel.model_validate(decode_access_token(credentials.credentials))
 
 
 @app.get("/authorize", response_model=bool)
-def authorize_user(scope: Scopes, token: str):
-    decoded_token = decode_access_token(token)
+def authorize_user(
+    scope: Scopes,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    decoded_token = decode_access_token(credentials.credentials)
     return int(scope) <= int(decoded_token.scope)
 
 

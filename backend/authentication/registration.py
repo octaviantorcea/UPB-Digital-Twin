@@ -5,13 +5,13 @@ import pyotp
 import uvicorn
 from bcrypt import hashpw, gensalt
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Security, Depends
-from fastapi.security import SecurityScopes, HTTPAuthorizationCredentials, HTTPBearer
+from fastapi import FastAPI, HTTPException, Security
+from fastapi.security import HTTPBearer
 
 from backend.authentication.database_model import User, SessionLocal
-from backend.authentication.login import authorize_user
 from backend.authentication.web_model import CreateUserBody
 from backend.shared_models.scopes import Scopes
+from backend.utils.auth import get_authorization
 from backend.utils.encrypt import decrypt_str, encrypt_str
 
 load_dotenv()
@@ -126,22 +126,9 @@ async def confirm_user(encrypted_user_id: str):
         db.close()
 
 
-def _get_authorization(
-    security_scopes: SecurityScopes,
-    credentials: HTTPAuthorizationCredentials = Depends(security)
-) -> bool:
-
-    try:
-        security_scope = Scopes(security_scopes.scope_str)
-    except ValueError:
-        raise HTTPException(status_code=500, detail="Invalid scopes")
-
-    return authorize_user(security_scope, credentials.credentials)
-
-
 @app.get("/users/{user_id}")
 async def get_user(
-        is_admin: Annotated[bool, Security(_get_authorization, scopes=[Scopes.ADMIN])],
+        is_admin: Annotated[bool, Security(get_authorization, scopes=[Scopes.ADMIN])],
         user_id: int
 ):
     if not is_admin:
@@ -177,7 +164,7 @@ async def get_user(
 
 @app.get("/users")
 async def get_all_registered_users(
-    is_admin: Annotated[bool, Security(_get_authorization, scopes=[Scopes.ADMIN])],
+    is_admin: Annotated[bool, Security(get_authorization, scopes=[Scopes.ADMIN])],
 ):
     if not is_admin:
         raise HTTPException(status_code=403, detail="Forbidden access")
@@ -207,7 +194,7 @@ async def get_all_registered_users(
 @app.post("/remove_user")
 async def remove_user(
     user_id: int,
-    is_admin: Annotated[bool, Security(_get_authorization, scopes=[Scopes.ADMIN])]
+    is_admin: Annotated[bool, Security(get_authorization, scopes=[Scopes.ADMIN])]
 ):
     if not is_admin:
         raise HTTPException(status_code=403, detail="Forbidden access")
