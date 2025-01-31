@@ -23,7 +23,7 @@ class User(Base):
     password = Column(String, nullable=False)
     email = Column(String, nullable=False)
     confirmed = Column(Boolean, default=False)
-    scope = Column(String, default=Scopes.BASIC)
+    scope = Column(String, default=Scopes.STUDENT)
     tfa_enabled = Column(Boolean, default=False)
     secret = Column(String, nullable=False)
 
