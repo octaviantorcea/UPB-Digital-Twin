@@ -49,8 +49,12 @@ async def register_user(user: CreateUserBody):
         hashed_password = _hash_password(user.password)
         encrypted_username = encrypt_str(user.username)
         encrypted_email = encrypt_str(user.email)
+        encrypted_fn = encrypt_str(user.first_name)
+        encrypted_ln = encrypt_str(user.last_name)
 
         db_user = User(username=encrypted_username,
+                       first_name=encrypted_fn,
+                       last_name=encrypted_ln,
                        password=hashed_password,
                        email=encrypted_email,
                        secret=pyotp.random_base32())
@@ -77,13 +81,12 @@ async def register_user(user: CreateUserBody):
         #     json=EmailRequest(
         #         recipient_email=user.email,
         #         subject="IMDB2 Confirmation Link",
-        #         message=f"Hello, {user.username}! Click on this link to confirm your email and finish creating your "
-        #                 f"IMDB2 account:\nhttp://localhost:29201/confirm/{encrypt_str(str(db_user.id))}"
+        #         message=f"Hello, {user.first_name} {user.last_name}! Click on this link to confirm your email and "
+        #                 f"finish creating your account:\nhttp://localhost:29201/confirm/{encrypt_str(str(db_user.id))}"
         #     ).model_dump()
         # )
         #
         # if r.status_code != 200:
-        #     logger.error(r.text)
         #     raise HTTPException(status_code=500, detail=r.json())
 
         db.refresh(db_user)
@@ -143,11 +146,15 @@ async def get_user(
             raise HTTPException(status_code=404, detail="User not found")
 
         username = decrypt_str(db_user.username)
+        first_name = decrypt_str(db_user.first_name)
+        last_name = decrypt_str(db_user.last_name)
         email = decrypt_str(db_user.email)
 
         return {
             "id": db_user.id,
             "username": username,
+            "first_name": first_name,
+            "last_name": last_name,
             "email": email,
             "confirmed": db_user.confirmed,
             "scope": db_user.scope,
@@ -177,6 +184,8 @@ async def get_all_registered_users(
             {
                 "id": user.id,
                 "username": decrypt_str(user.username),
+                "first_name": decrypt_str(user.first_name),
+                "last_name": decrypt_str(user.last_name),
                 "email": decrypt_str(user.email),
                 "confirmed": user.confirmed,
                 "scope": user.scope,

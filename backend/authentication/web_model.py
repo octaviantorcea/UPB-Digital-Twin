@@ -5,6 +5,8 @@ from pydantic import BaseModel
 
 
 class CreateUserBody(BaseModel):
+    first_name: str
+    last_name: str
     username: str
     password: str
     email: str
@@ -18,6 +20,8 @@ class Token(BaseModel):
 class TokenModel(BaseModel):
     username_id: int
     username: str
+    first_name: str
+    last_name: str
     scope: str
     email: Optional[str] = None
     secret: Optional[str] = None

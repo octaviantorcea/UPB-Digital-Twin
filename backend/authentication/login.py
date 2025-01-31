@@ -66,6 +66,8 @@ def login(
             TokenModel(
                 username_id=user.id,
                 username=credentials.username,
+                first_name=decrypt_str(user.first_name),
+                last_name=decrypt_str(user.last_name),
                 scope=user.scope,
                 email=decrypt_str(user.email),
                 secret=user.secret,
