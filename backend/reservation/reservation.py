@@ -1,5 +1,5 @@
 import os
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 
 import uvicorn
 from dotenv import load_dotenv
@@ -8,12 +8,15 @@ from fastapi.security import HTTPBearer
 from sqlalchemy import inspect
 
 from backend.reservation.database_model import create_room_table, SessionLocal, engine, Base
-from backend.reservation.web_model import ReservationRequest, TimeInterval
+from backend.reservation.web_model import ReservationRequest, TimeInterval, ReservationResponse
 
 load_dotenv()
 security = HTTPBearer()
 
 app = FastAPI()
+
+
+# TODO: add token verification, reserve room only for teachers
 
 
 @app.post("/reserve")
@@ -69,39 +72,90 @@ def reserve_room(
         db.close()
 
 
-@app.get("/show_reservations")
-def show_reservations(
+def _get_reservations(db, RoomReservation, start_date, end_date) -> dict[date, list[ReservationResponse]]:
+    reservations = db.query(RoomReservation).filter(
+        RoomReservation.day_of_reservation >= start_date,
+        RoomReservation.day_of_reservation <= end_date
+    ).order_by(RoomReservation.day_of_reservation, RoomReservation.start_time).all()
+
+    room_name = RoomReservation.__tablename__
+
+    reservations_by_day = {}
+    for reservation in reservations:
+        day = reservation.day_of_reservation
+
+        if day not in reservations_by_day:
+            reservations_by_day[day] = []
+
+        reservations_by_day[day].append(
+            ReservationResponse(
+                room_name=room_name,
+                start_date=datetime.combine(day, reservation.start_time),
+                end_date=datetime.combine(day, reservation.end_time),
+                name=reservation.reserved_by,
+                day=day,
+                created_at=reservation.created_at,
+            )
+        )
+
+    return reservations_by_day
+
+
+def _get_end_date(start_date: date, time_interval: TimeInterval) -> date:
+    if time_interval == TimeInterval.DAY:
+        return start_date
+    elif time_interval == TimeInterval.WEEK:
+        return start_date + timedelta(days=6)
+    elif time_interval == TimeInterval.MONTH:
+        return start_date + timedelta(days=30)
+    else:
+        raise HTTPException(status_code=400, detail="Invalid time interval.")
+
+
+@app.get("/get_reservations_for_interval")
+def get_reservations_for_interval(
     room_name: str,
     time_interval: TimeInterval = Query(..., description="Time interval"),
     start_date: date = Query(..., description="Start date of the interval (YYYY-MM-DD)")
-):
-    if time_interval == TimeInterval.DAY:
-        end_date = start_date
-    elif time_interval == TimeInterval.WEEK:
-        end_date = start_date + timedelta(days=6)
-    elif time_interval == TimeInterval.MONTH:
-        end_date = start_date + timedelta(days=30)
-    else:
-        raise HTTPException(status_code=400, detail="Invalid time interval.")
+) -> dict[date, list[ReservationResponse]]:
+    end_date = _get_end_date(start_date, time_interval)
 
     RoomReservation = create_room_table(room_name)
 
     db = SessionLocal()
 
     try:
-        reservations = db.query(RoomReservation).filter(
-            RoomReservation.day_of_reservation >= start_date,
-            RoomReservation.day_of_reservation <= end_date
-        ).order_by(RoomReservation.day_of_reservation, RoomReservation.start_time).all()
+        inspector = inspect(engine)
+        if not inspector.has_table(room_name):
+            return {}
 
-        reservations_by_day = {}
-        for reservation in reservations:
-            day = reservation.day_of_reservation
+        return _get_reservations(db, RoomReservation, start_date, end_date)
 
-            if day not in reservations_by_day:
-                reservations_by_day[day] = []
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-            reservations_by_day[day].append(reservation)
+    finally:
+        db.close()
+
+
+@app.get("/show_reservations")
+def show_reservations(
+    room_name: str,
+    time_interval: TimeInterval = Query(..., description="Time interval"),
+    start_date: date = Query(..., description="Start date of the interval (YYYY-MM-DD)")
+):
+    end_date = _get_end_date(start_date, time_interval)
+
+    RoomReservation = create_room_table(room_name)
+
+    db = SessionLocal()
+
+    try:
+        inspector = inspect(engine)
+        if not inspector.has_table(room_name):
+            return {"reservations": []}
+
+        reservations_by_day = _get_reservations(db, RoomReservation, start_date, end_date)
 
         result = []
         for day, reservations in reservations_by_day.items():
@@ -111,14 +165,16 @@ def show_reservations(
             table += "-" * 40 + "\n"
 
             for reservation in reservations:
-                time_interval = f"{reservation.start_time.strftime('%H:%M')} - {reservation.end_time.strftime('%H:%M')}"
-                table += f"{time_interval:<20} | {reservation.reserved_by:<15}\n"
+                time_interval = (f"{reservation.start_date.time().strftime('%H:%M')} - "
+                                 f"{reservation.end_date.time().strftime('%H:%M')}")
+                table += f"{time_interval:<20} | {reservation.name:<15}\n"
 
             table += "-" * 40 + "\n"
             result.append(table)
 
         for res in result:
             print(res)
+
         return {"reservations": result}
 
     except Exception as e:

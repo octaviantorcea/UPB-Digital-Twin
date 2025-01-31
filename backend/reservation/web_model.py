@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date, time
 from enum import Enum
 
 from pydantic import BaseModel
@@ -15,3 +15,8 @@ class TimeInterval(Enum):
     DAY = "day"
     WEEK = "week"
     MONTH = "month"
+
+
+class ReservationResponse(ReservationRequest):
+    day: date
+    created_at: datetime
