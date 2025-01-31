@@ -3,23 +3,24 @@ from concurrent.futures import Future
 from datetime import date, timedelta, datetime
 from queue import Queue
 from threading import Thread
+from typing import Annotated
 
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Security, Depends
 from fastapi.security import HTTPBearer
 from sqlalchemy import inspect
 
 from backend.reservation.database_model import create_room_table, SessionLocal, engine, Base
 from backend.reservation.web_model import ReservationRequest, TimeInterval, ReservationResponse
+from backend.shared_models.scopes import Scopes
+from backend.utils.auth import get_authorization, get_current_user
+from shared_models.token import TokenModel
 
 load_dotenv()
 security = HTTPBearer()
 
 app = FastAPI()
-
-
-# TODO: add token verification, reserve room only for teachers
 
 reservation_queue = Queue()
 
@@ -83,8 +84,15 @@ def _process_reservations():
 
 @app.post("/reserve")
 def reserve_room(
-    reservation: ReservationRequest
+    reservation: ReservationRequest,
+    is_teacher: Annotated[bool, Security(get_authorization, scopes=[Scopes.TEACHER])],
+    current_user: Annotated[TokenModel, Depends(get_current_user)],
 ):
+    if not is_teacher:
+        raise HTTPException(status_code=403, detail="Only teachers can reserve")
+
+    reservation.name = f"{current_user.first_name} {current_user.last_name}"
+
     res_future = Future()
     reservation_queue.put((res_future, reservation))
 

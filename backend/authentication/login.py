@@ -10,8 +10,9 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.security import OAuth2PasswordRequestForm, HTTPAuthorizationCredentials, HTTPBearer
 
 from backend.authentication.database_model import User, get_all_registered_users_as_list
-from backend.authentication.web_model import TokenModel, Token
+from backend.authentication.web_model import Token
 from backend.shared_models.scopes import Scopes
+from backend.shared_models.token import TokenModel
 from backend.utils.encrypt import decrypt_str
 
 BASE_EXPIRE_DELTA = 120
@@ -82,7 +83,7 @@ def login(
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ) -> TokenModel:
-    return TokenModel.model_validate(decode_access_token(credentials.credentials))
+    return decode_access_token(credentials.credentials)
 
 
 @app.get("/authorize", response_model=bool)
