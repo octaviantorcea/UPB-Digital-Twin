@@ -1,4 +1,4 @@
-from datetime import datetime, date, time
+from datetime import datetime, date
 from enum import Enum
 
 from pydantic import BaseModel

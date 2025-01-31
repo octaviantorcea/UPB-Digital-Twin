@@ -44,22 +44,24 @@ def reserve_room(
         if not inspector.has_table(room_name):
             Base.metadata.create_all(bind=engine, tables=[RoomReservation.__table__])
 
-        overlapping_reservations = db.query(RoomReservation).filter(
-            RoomReservation.day_of_reservation == day_of_reservation,
-            RoomReservation.start_time < end_date,
-            RoomReservation.end_time > start_time
-        ).all()
+        with db.begin():
+            overlapping_reservations = db.query(RoomReservation).with_for_update().filter(
+                RoomReservation.day_of_reservation == day_of_reservation,
+                RoomReservation.start_time < end_date,
+                RoomReservation.end_time > start_time
+            ).all()
 
-        if overlapping_reservations:
-            raise HTTPException(status_code=400, detail="Time slot is already booked.")
+            if overlapping_reservations:
+                raise HTTPException(status_code=400, detail="Time slot is already booked.")
 
-        reservation = RoomReservation(
-            day_of_reservation=day_of_reservation,
-            start_time=start_time,
-            end_time=end_time,
-            reserved_by=reserved_by
-        )
-        db.add(reservation)
+            reservation = RoomReservation(
+                day_of_reservation=day_of_reservation,
+                start_time=start_time,
+                end_time=end_time,
+                reserved_by=reserved_by
+            )
+            db.add(reservation)
+
         db.commit()
 
         return {"message": "Reservation successfully!", "reservation_id": reservation.id}
