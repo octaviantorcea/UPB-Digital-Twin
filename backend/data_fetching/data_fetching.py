@@ -14,7 +14,8 @@ app = FastAPI()
 load_dotenv()
 
 redis_client = redis.Redis(host=os.getenv('REDIS_HOST'),
-                           port=os.getenv('REDIS_PORT'))
+                           port=os.getenv('REDIS_PORT'),
+                           decode_responses=True)
 
 KEY_DELIM = "|"
 
@@ -60,13 +61,12 @@ async def get_real_time_data(
 
     keys = redis_client.keys("*")
     for key in keys:
-        key_str = key.decode()
-        key_parts = key_str.split(KEY_DELIM)
+        key_parts = key.split(KEY_DELIM)
 
         if (real_time_req.device_id is None or real_time_req.device_id == key_parts[0]) \
             and (real_time_req.sensor_type is None or real_time_req.sensor_type == key_parts[1]) \
                 and (real_time_req.location is None or real_time_req.location == key_parts[2]):
-            data = eval(redis_client.get(key).decode())
+            data = eval(redis_client.get(key))
             filtered_data[(key_parts[0], key_parts[1], key_parts[2])] = DataResponse.model_validate(data)
 
     return filtered_data
