@@ -3,3 +3,5 @@
 .env
 db
 __pycache__
+redis_data
+redis.conf
