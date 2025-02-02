@@ -7,7 +7,8 @@ import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, Depends, Request, BackgroundTasks
 
-from backend.data_fetching.web_model import HistDataRequest, DataResponse, RealTimeDataRequest
+from backend.data_fetching.web_model import HistDataRequest, RealTimeDataRequest
+from backend.shared_models.sensor_data_model import DataResponse
 
 app = FastAPI()
 

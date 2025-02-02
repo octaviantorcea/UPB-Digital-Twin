@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel, Field
@@ -15,12 +14,3 @@ class HistDataRequest(RealTimeDataRequest):
                                      description="RFC3339 format only (example: 2024-01-18T23:59:59Z)")
     to_date: Optional[str] = Field(default=None, alias='to',
                                    description="RFC3339 format only (example: 2024-01-18T23:59:59Z)")
-
-
-class DataResponse(BaseModel):
-    id: str
-    device_id: str
-    sensor_type: str
-    value: float
-    timestamp: datetime
-    location: str
