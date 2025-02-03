@@ -5,3 +5,4 @@ db
 __pycache__
 redis_data
 redis.conf
+ports
