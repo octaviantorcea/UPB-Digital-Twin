@@ -5,17 +5,12 @@ from email.mime.text import MIMEText
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, EmailStr
+
+from shared_models.email_model import EmailRequest
 
 load_dotenv()
 
 app = FastAPI()
-
-
-class EmailRequest(BaseModel):
-    recipient: EmailStr
-    subject: str
-    message: str
 
 
 # Load credentials

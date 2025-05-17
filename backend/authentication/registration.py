@@ -2,17 +2,21 @@ import os
 from typing import Annotated
 
 import pyotp
+import requests
 import uvicorn
 from bcrypt import hashpw, gensalt
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Security
 from fastapi.security import HTTPBearer
 
+from authentication.login import create_access_token
 from backend.authentication.database_model import User, SessionLocal
 from backend.authentication.web_model import CreateUserBody
 from backend.shared_models.scopes import Scopes
 from backend.utils.auth import get_authorization
 from backend.utils.encrypt import decrypt_str, encrypt_str
+from shared_models.email_model import EmailRequest
+from shared_models.token import TokenModel
 
 load_dotenv()
 security = HTTPBearer()
@@ -41,6 +45,8 @@ async def register_user(user: CreateUserBody):
 
     is_unique, msg = _check_unique_user(user, db.query(User).all())
 
+    new_id = None
+
     if not is_unique:
         db.close()
         raise HTTPException(status_code=403, detail=msg)
@@ -61,45 +67,52 @@ async def register_user(user: CreateUserBody):
 
         db.add(db_user)
         db.commit()
+        new_id = db_user.id
 
-        # admin_token = create_access_token(
-        #     data=TokenModel(
-        #         username_id=-1,
-        #         username="admin_for_email",
-        #         scope=Scopes.ADMIN
-        #     ).model_dump(),
-        #     expires_delta=1,
-        # )
-        # headers = {
-        #     "Authorization": f"Bearer {admin_token}",
-        #     "Content-Type": "application/json",
-        # }
-        #
-        # r = requests.post(
-        #     os.getenv("BACKBONE_EMAIL_SERVICE_ADDRESS"),
-        #     headers=headers,
-        #     json=EmailRequest(
-        #         recipient_email=user.email,
-        #         subject="IMDB2 Confirmation Link",
-        #         message=f"Hello, {user.first_name} {user.last_name}! Click on this link to confirm your email and "
-        #                 f"finish creating your account:\nhttp://localhost:29201/confirm/{encrypt_str(str(db_user.id))}"
-        #     ).model_dump()
-        # )
-        #
-        # if r.status_code != 200:
-        #     raise HTTPException(status_code=500, detail=r.json())
+        admin_token = create_access_token(
+            data=TokenModel(
+                username_id=-1,
+                username="admin_for_email",
+                scope=Scopes.ADMIN,
+                first_name='',
+                last_name='',
+            ).model_dump(),
+            expires_delta=1,
+        )
+        headers = {
+            "Authorization": f"Bearer {admin_token}",
+            "Content-Type": "application/json",
+        }
+
+        r = requests.post(
+            f"{os.getenv("EMAIL_SERVICE_ADDRESS")}:{os.getenv("EMAIL_PORT")}/send_email",
+            headers=headers,
+            json=EmailRequest(
+                recipient=user.email,
+                subject="UPB DT Confirmation Link",
+                message=f"Hello, {user.first_name} {user.last_name}! Click on this link to confirm your email and "
+                        f"finish creating your account:\nhttp://localhost:29201/confirm/{encrypt_str(str(db_user.id))}"
+            ).model_dump()
+        )
+
+        if r.status_code != 200:
+            raise HTTPException(status_code=500, detail=r.json())
 
         db.refresh(db_user)
 
-        # TODO: remove "link" field from return json when email service is implemented
         return {
             "message": "User registered successfully. To complete the registration, we need you to confirm your email. "
-                       "Access the link sent to your email.",
-            "link": f"http://localhost:29201/confirm/{encrypt_str(str(db_user.id))}"
+                       "Access the link sent to your email."
         }
 
     except Exception as e:
         db.rollback()
+
+        if new_id:
+            db.query(User).filter(User.id == new_id).delete()
+            db.commit()
+
+        db.close()
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         db.close()
@@ -210,7 +223,7 @@ async def remove_user(
 
     db = SessionLocal()
 
-    User.query.filter(User.id == user_id).delete()
+    db.query(User).filter(User.id == user_id).delete()
     db.commit()
 
     db.close()
