@@ -47,10 +47,10 @@ const Register = () => {
   };
 
   return (
-    <div style={{ maxWidth: "500px", margin: "auto", padding: "1rem" }}>
+    <div className="container">
       <h2>Register</h2>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      {success && <p style={{ color: "green" }}>Registered! Redirecting to login...</p>}
+      {success && <p className="success">Registration successful! Redirecting...</p>}
+      {error && <p className="error">{error}</p>}
 
       <form onSubmit={handleSubmit}>
         {["first_name", "last_name", "username", "email", "password"].map(field => (
