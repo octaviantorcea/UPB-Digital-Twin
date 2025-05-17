@@ -11,6 +11,7 @@ const Register = () => {
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -31,12 +32,16 @@ const Register = () => {
         body: JSON.stringify(form),
       });
 
+      const data = await res.json()
+
       if (!res.ok) {
         throw new Error("Registration failed");
       }
 
+      setSuccessMessage(data.message || "Registration successful!")
       setSuccess(true);
-      setTimeout(() => navigate("/login"), 1500);
+
+      setTimeout(() => navigate("/login"), 10000);
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
@@ -49,7 +54,7 @@ const Register = () => {
   return (
     <div className="container">
       <h2>Register</h2>
-      {success && <p className="success">Registration successful! Redirecting...</p>}
+      {success && <p className="success">{successMessage}</p>}
       {error && <p className="error">{error}</p>}
 
       <form onSubmit={handleSubmit}>
