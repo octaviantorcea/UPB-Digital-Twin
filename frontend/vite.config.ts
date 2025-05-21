@@ -15,6 +15,11 @@ export default defineConfig({
         target: "http://localhost:29201",
         changeOrigin: true,
         secure: false
+      },
+      '/get_building_plan': {
+        target: 'http://localhost:29204',
+        changeOrigin: true,
+        secure: false
       }
     }
   }
