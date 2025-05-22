@@ -20,6 +20,11 @@ export default defineConfig({
         target: 'http://localhost:29204',
         changeOrigin: true,
         secure: false
+      },
+      '/real_time_data': {
+        target: 'http://localhost:29204',
+        changeOrigin: true,
+        secure: false
       }
     }
   }
