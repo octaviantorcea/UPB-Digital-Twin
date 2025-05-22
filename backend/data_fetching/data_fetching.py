@@ -1,4 +1,5 @@
 import os
+import random
 from typing import Dict, List, Tuple
 
 import httpx
@@ -6,6 +7,7 @@ import redis
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, Depends, Request, BackgroundTasks
+from starlette.websockets import WebSocket
 
 from backend.shared_models.sensor_data_model import DataResponse, HistDataRequest, RealTimeDataRequest
 
@@ -70,6 +72,29 @@ async def get_real_time_data(
             filtered_data[(key_parts[0], key_parts[1], key_parts[2])] = DataResponse.model_validate(data)
 
     return filtered_data
+
+
+@app.get("/get_building_plan")
+async def get_building_plan() -> Dict[str, set[str]]:
+    FLOORS = ["Floor1", "Floor2"]
+
+    latest_data = await get_real_time_data(RealTimeDataRequest())
+
+    building_plan = {}
+
+    for (device, sensor_type, location) in latest_data:
+        floor = random.choice(FLOORS)
+
+        if floor not in building_plan:
+            building_plan[floor] = set()
+
+        building_plan[floor].add(location)
+
+    return building_plan
+
+
+active_connections: List[WebSocket] = []
+
 
 if __name__ == "__main__":
     # subscribe
