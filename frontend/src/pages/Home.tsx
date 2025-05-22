@@ -1,8 +1,8 @@
-import React, { useEffect, useState} from "react";
+import React, { useEffect, useState } from "react";
 
 type BuildingPlan = {
-  [floor: string]: string[]
-}
+  [floor: string]: string[];
+};
 
 const Home = () => {
   const [buildingPlan, setBuildingPlan] = useState<BuildingPlan>({});
@@ -34,44 +34,94 @@ const Home = () => {
     });
   };
 
-return (
-    <div style={{ padding: "2rem" }}>
-      <h2>Building Plan</h2>
-      {Object.entries(buildingPlan).map(([floor, rooms]) => (
-        <div
-          key={floor}
-          style={{
-            marginBottom: "1rem",
-            border: "1px solid #ccc",
-            borderRadius: "8px",
-            padding: "1rem",
-            backgroundColor: "#f9f9f9",
-          }}
-        >
-          <div
+  return (
+    <div
+      style={{
+        maxWidth: 600,
+        margin: "2rem auto",
+        padding: "0 1rem",
+        fontFamily:
+          '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif',
+        color: "#222",
+      }}
+    >
+      <h2 style={{ textAlign: "center", fontWeight: "700", fontSize: "2rem", marginBottom: "2rem" }}>
+        🏢 Building Plan
+      </h2>
+
+      {Object.entries(buildingPlan).map(([floor, rooms]) => {
+        const isExpanded = expandedFloors.has(floor);
+        return (
+          <section
+            key={floor}
             style={{
-              display: "flex",
-              justifyContent: "space-between",
+              backgroundColor: "#fff",
+              borderRadius: 12,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              marginBottom: "1.5rem",
+              overflow: "hidden",
+              transition: "box-shadow 0.3s ease",
               cursor: "pointer",
-              fontWeight: "bold",
-              fontSize: "1.2rem",
             }}
             onClick={() => toggleFloor(floor)}
+            aria-expanded={isExpanded}
+            aria-controls={`rooms-${floor}`}
           >
-            <span>{floor}</span>
-            <span>{expandedFloors.has(floor) ? "▲" : "▼"}</span>
-          </div>
-          {expandedFloors.has(floor) && (
-            <ul style={{ marginTop: "1rem", paddingLeft: "1.5rem" }}>
+            <header
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "1rem 1.5rem",
+                fontWeight: 600,
+                fontSize: "1.25rem",
+                userSelect: "none",
+                backgroundColor: isExpanded ? "#f0f4f8" : "#fafafa",
+                transition: "background-color 0.3s ease",
+              }}
+            >
+              <span>{floor}</span>
+              <span
+                style={{
+                  fontSize: "1.25rem",
+                  transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
+                  transition: "transform 0.3s ease",
+                }}
+                aria-hidden="true"
+              >
+                ▼
+              </span>
+            </header>
+
+            <ul
+              id={`rooms-${floor}`}
+              style={{
+                maxHeight: isExpanded ? 500 : 0,
+                overflow: "hidden",
+                transition: "max-height 0.4s ease",
+                padding: isExpanded ? "1rem 2rem" : "0 2rem",
+                margin: 0,
+                backgroundColor: "#f9fafe",
+                listStyleType: "none",
+              }}
+            >
               {rooms.map((room) => (
-                <li key={room} style={{ marginBottom: "0.5rem" }}>
+                <li
+                  key={room}
+                  style={{
+                    padding: "0.5rem 0",
+                    borderBottom: "1px solid #ddd",
+                    fontSize: "1rem",
+                    color: "#555",
+                  }}
+                >
                   {room}
                 </li>
               ))}
             </ul>
-          )}
-        </div>
-      ))}
+          </section>
+        );
+      })}
     </div>
   );
 };
