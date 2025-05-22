@@ -105,14 +105,70 @@ const Home = () => {
             {isExpanded && (
               <ul style={{ padding: "1rem 2rem", margin: 0, listStyleType: "none" }}>
                 {rooms.map((room) => (
-                  <li key={room} style={{ marginBottom: "1rem" }}>
-                    <div style={{ fontWeight: "bold", marginBottom: "0.25rem" }}>{room}</div>
-                    <ul style={{ paddingLeft: "1rem", color: "#555" }}>
-                      {(roomSensorData[room] || []).map((sensor) => (
-                        <li key={`${sensor.device_id}-${sensor.sensor_type}`}>
-                          {sensor.sensor_type}-{sensor.device_id}: {sensor.value}
-                        </li>
-                      ))}
+                  <li
+                    key={room}
+                    style={{
+                      marginBottom: "1rem",
+                      border: "1px solid #ddd",
+                      borderRadius: "8px",
+                      padding: "1rem",
+                      backgroundColor: "#fafafa",
+                      cursor: "pointer",
+                      transition: "background-color 0.2s, box-shadow 0.2s",
+                    }}
+                    onClick={() => console.log(`Clicked on room: ${room}`)} // placeholder action
+                    onMouseOver={(e) => {
+                      (e.currentTarget as HTMLLIElement).style.boxShadow = "0 1px 6px rgba(0,0,0,0.1)";
+                    }}
+                    onMouseOut={(e) => {
+                      (e.currentTarget as HTMLLIElement).style.boxShadow = "none";
+                    }}
+                  >
+                    <div style={{ fontWeight: "bold", marginBottom: "0.5rem", fontSize: "1.1rem" }}>
+                      🏠 {room}
+                    </div>
+                    <ul style={{ paddingLeft: "1rem", color: "#555", margin: 0 }}>
+                      {(roomSensorData[room] || []).map((sensor) => {
+                        let icon = "";
+                        let color = "";
+
+                        switch (sensor.sensor_type.toLowerCase()) {
+                          case "temperature":
+                            icon = "🌡️";
+                            color = "#d9534f"; // red
+                            break;
+                          case "humidity":
+                            icon = "💧";
+                            color = "#0275d8"; // blue
+                            break;
+                          case "pressure":
+                            icon = "💨";
+                            color = "#5cb85c"; // green
+                            break;
+                          default:
+                            icon = "🔎";
+                            color = "#999";
+                        }
+
+                        return (
+                          <li
+                            key={`${sensor.device_id}-${sensor.sensor_type}`}
+                            style={{
+                              fontSize: "0.95rem",
+                              marginBottom: "0.35rem",
+                              color,
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "0.5rem",
+                            }}
+                          >
+                            <span style={{ fontSize: "1.1rem" }}>{icon}</span>
+                            <span>
+                              <strong>{sensor.sensor_type}</strong> – <em>{sensor.device_id}</em>: {sensor.value}
+                            </span>
+                          </li>
+                        );
+                      })}
                       {!roomSensorData[room] && (
                         <li style={{ fontStyle: "italic", color: "#999" }}>Loading...</li>
                       )}
