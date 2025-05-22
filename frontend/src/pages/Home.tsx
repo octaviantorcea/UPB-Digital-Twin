@@ -23,6 +23,18 @@ const Home = () => {
   const [roomSensorData, setRoomSensorData] = useState<RoomSensorMap>({});
 
   useEffect(() => {
+    const interval = setInterval(() => {
+      Object.keys(buildingPlan).forEach((floor) => {
+        buildingPlan[floor].forEach((room) => {
+          fetchSensorDataForRoom(room);
+        });
+      });
+    }, 5000); // Poll every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [buildingPlan]);
+
+  useEffect(() => {
     const fetchBuildingPlan = async () => {
       try {
         const res = await fetch("/get_building_plan");
