@@ -1,5 +1,18 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
+
+type DecodedToken = {
+  username_id: number;
+  username: string;
+  first_name: string;
+  last_name: string;
+  scope: string;
+  email?: string;
+  secret?: string;
+  tfa_enabled?: boolean;
+  exp?: number;
+};
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -29,13 +42,24 @@ const Login = () => {
       }
 
       const data = await res.json();
-      localStorage.setItem("access_token", data.access_token);
+      const token = data.access_token;
+
+      // Save the token in localStorage
+      localStorage.setItem("access_token", token);
+
+      // Decode token and save first + last name in localStorage
+      const decoded: DecodedToken = jwtDecode(token);
+      const fullName = `${decoded.first_name} ${decoded.last_name}`;
+      localStorage.setItem("username", fullName);
+
+      window.dispatchEvent(new Event("user-updated"))
+
       navigate("/");
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError("Login failed")
+        setError("Login failed");
       }
     }
   };
