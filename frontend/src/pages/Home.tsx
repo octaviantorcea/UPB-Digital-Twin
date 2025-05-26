@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 type BuildingPlan = {
   [floor: string]: string[];
@@ -81,7 +81,7 @@ const Home = () => {
   return (
     <div style={{ maxWidth: 600, margin: "2rem auto", padding: "0 1rem", fontFamily: "sans-serif" }}>
       <h2 style={{ textAlign: "center", fontWeight: "700", fontSize: "2rem", marginBottom: "2rem" }}>
-        🏢 Building Plan
+        🏢 Precis
       </h2>
 
       {Object.entries(buildingPlan).map(([floor, rooms]) => {
