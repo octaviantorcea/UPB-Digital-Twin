@@ -7,7 +7,6 @@ import redis
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, Depends, Request, BackgroundTasks
-from starlette.websockets import WebSocket
 
 from backend.shared_models.sensor_data_model import DataResponse, HistDataRequest, RealTimeDataRequest
 
@@ -93,9 +92,6 @@ async def get_building_plan() -> Dict[str, set[str]]:
     return building_plan
 
 
-active_connections: List[WebSocket] = []
-
-
 if __name__ == "__main__":
     # subscribe
     with httpx.Client() as sub_client:
@@ -103,8 +99,8 @@ if __name__ == "__main__":
             os.getenv("WEBHOOK_SUB"),
             json={
                 "url": f"http://host.docker.internal:{os.getenv("PORT")}/webhook",
-                "topic_filter": "PLACEHOLDER",
-                "secret": "PLACEHOLDER"
+                "topic_filter": "#",
+                "secret": "your-secret-key"
             },
         )
 

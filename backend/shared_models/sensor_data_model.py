@@ -22,5 +22,9 @@ class DataResponse(BaseModel):
     device_id: str
     sensor_type: str
     value: float
+    unit: str
     timestamp: datetime
     location: str
+    latitude: float
+    longitude: float
+    is_indoor: bool
