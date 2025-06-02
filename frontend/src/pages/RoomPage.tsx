@@ -11,23 +11,24 @@ const RoomPage = () => {
       <header
         style={{
           display: "flex",
-          justifyContent: "center",
-          gap: "2rem",
+          border: "1px solid #ddd",
+          borderRadius: "8px",
+          overflow: "hidden",
           marginBottom: "2rem",
-          borderBottom: "2px solid #ddd",
         }}
       >
         <button
           onClick={() => setActiveTab("data")}
           style={{
-            background: "none",
+            flex: 1,
+            background: activeTab === "data" ? "#007bff" : "white",
+            color: activeTab === "data" ? "white" : "#555",
             border: "none",
             padding: "1rem",
             fontWeight: 600,
             fontSize: "1rem",
-            borderBottom: activeTab === "data" ? "2px solid #007bff" : "none",
-            color: activeTab === "data" ? "#007bff" : "#555",
             cursor: "pointer",
+            transition: "background 0.3s, color 0.3s",
           }}
         >
           Data
@@ -35,14 +36,15 @@ const RoomPage = () => {
         <button
           onClick={() => setActiveTab("reservations")}
           style={{
-            background: "none",
+            flex: 1,
+            background: activeTab === "reservations" ? "#007bff" : "white",
+            color: activeTab === "reservations" ? "white" : "#555",
             border: "none",
             padding: "1rem",
             fontWeight: 600,
             fontSize: "1rem",
-            borderBottom: activeTab === "reservations" ? "2px solid #007bff" : "none",
-            color: activeTab === "reservations" ? "#007bff" : "#555",
             cursor: "pointer",
+            transition: "background 0.3s, color 0.3s",
           }}
         >
           Reservations
