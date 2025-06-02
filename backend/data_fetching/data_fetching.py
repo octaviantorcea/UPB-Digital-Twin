@@ -75,7 +75,7 @@ async def get_real_time_data(
 
 @app.get("/get_building_plan")
 async def get_building_plan() -> Dict[str, set[str]]:
-    FLOORS = ["Floor1", "Floor2"]
+    FLOORS = ["Floor1", "Floor2", "Floor3"]
 
     latest_data = await get_real_time_data(RealTimeDataRequest())
 

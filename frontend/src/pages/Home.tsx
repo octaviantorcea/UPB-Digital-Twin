@@ -140,7 +140,9 @@ const Home = () => {
                       🏠 {room}
                     </div>
                     <ul style={{ paddingLeft: "1rem", color: "#555", margin: 0 }}>
-                      {(roomSensorData[room] || []).map((sensor) => {
+                      {(roomSensorData[room] || [])
+                      .filter((sensor) => sensor.sensor_type.toLowerCase() !== "motion")
+                      .map((sensor) => {
                         let icon = "";
                         let color = "";
 
@@ -157,6 +159,14 @@ const Home = () => {
                             icon = "💨";
                             color = "#5cb85c"; // green
                             break;
+                          case "light":
+                              icon = "💡";
+                              color = "#f39c12"; // orange
+                              break;
+                          case "sound":
+                              icon = "🔊";
+                              color = "#555651"; // metalic grey
+                              break;
                           default:
                             icon = "🔎";
                             color = "#999";

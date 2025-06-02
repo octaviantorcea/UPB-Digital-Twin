@@ -27,4 +27,3 @@ class DataResponse(BaseModel):
     location: str
     latitude: float
     longitude: float
-    is_indoor: bool
