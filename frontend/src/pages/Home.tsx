@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 type BuildingPlan = {
   [floor: string]: string[];
@@ -21,6 +22,8 @@ const Home = () => {
   const [buildingPlan, setBuildingPlan] = useState<BuildingPlan>({});
   const [expandedFloors, setExpandedFloors] = useState<Set<string>>(new Set());
   const [roomSensorData, setRoomSensorData] = useState<RoomSensorMap>({});
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -119,6 +122,7 @@ const Home = () => {
                 {rooms.map((room) => (
                   <li
                     key={room}
+                    onClick={() => navigate(`/rooms/${encodeURIComponent(room)}`)}
                     style={{
                       marginBottom: "1rem",
                       border: "1px solid #ddd",
@@ -128,7 +132,6 @@ const Home = () => {
                       cursor: "pointer",
                       transition: "background-color 0.2s, box-shadow 0.2s",
                     }}
-                    onClick={() => console.log(`Clicked on room: ${room}`)} // placeholder action
                     onMouseOver={(e) => {
                       (e.currentTarget as HTMLLIElement).style.boxShadow = "0 1px 6px rgba(0,0,0,0.1)";
                     }}

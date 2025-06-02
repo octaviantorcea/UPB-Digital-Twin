@@ -76,9 +76,16 @@ const Navbar = () => {
         )}
         <div
           onClick={toggleMenu}
-          style={{ cursor: "pointer", fontSize: "1.5rem" }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            cursor: "pointer",
+            fontSize: "1.5rem",
+            gap: "0.5rem"
+          }}
         >
           ☰
+          <span style={{ fontSize: "1rem" }}>Menu</span>
         </div>
       </div>
 
