@@ -4,13 +4,14 @@ import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import dayjs from "dayjs";
-
+import { DateSelectArg } from "@fullcalendar/core/index.js";
+import { EventInput } from "@fullcalendar/core/index.js";
 
 const RoomPage = () => {
   const { roomName } = useParams<{ roomName: string }>();
   const [activeTab, setActiveTab] = useState<"data" | "reservations">("data");
 
-  const mockEvents = [
+  const [events, setEvents] = useState<EventInput[]>([
     {
       id: "1",
       title: "Team Sync",
@@ -23,7 +24,23 @@ const RoomPage = () => {
       start: dayjs().add(1, "day").hour(14).minute(0).toISOString(),
       end: dayjs().add(1, "day").hour(15).minute(0).toISOString(),
     },
-  ];
+  ]);
+
+  const handleDateSelect = (selectInfo: DateSelectArg) => {
+    const title = prompt("Enter reservation title:");
+    const calendarApi = selectInfo.view.calendar;
+    calendarApi.unselect(); // clear selection
+
+    if (title) {
+      const newEvent: EventInput = {
+        id: String(events.length + 1),
+        title,
+        start: selectInfo.startStr,
+        end: selectInfo.endStr,
+      };
+      setEvents((prev) => [...prev, newEvent]);
+    }
+  };
 
   return (
     <div style={{ maxWidth: 1000, margin: "2rem auto", fontFamily: "sans-serif" }}>
@@ -76,9 +93,10 @@ const RoomPage = () => {
           <FullCalendar
             plugins={[timeGridPlugin, interactionPlugin]}
             initialView="timeGridWeek"
-            events={mockEvents}
+            events={events}
             editable={false}
             selectable={true}
+            select={handleDateSelect}
             allDaySlot={false}
             height="auto"
             slotMinTime="08:00:00"
