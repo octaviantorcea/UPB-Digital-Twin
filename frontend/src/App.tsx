@@ -3,7 +3,7 @@ import Login from "./pages/Login";
 import Home from "./pages/Home";
 import Register from "./pages/Register";
 import Navbar from "./components/Navbar";
-import RoomPage from "./pages/RoomPage";
+import RoomPage from "./pages/RoomPage/RoomPage";
 
 function App() {
   return (

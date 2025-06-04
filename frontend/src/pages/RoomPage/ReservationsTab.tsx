@@ -1,15 +1,11 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
 import FullCalendar from "@fullcalendar/react";
-import DateSelectArg from "@fullcalendar/react";
-import EventClickArg from "@fullcalendar/react";
-import EventInput from "@fullcalendar/react";
-import DatesSetArg from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
+import DatesSetArg from "@fullcalendar/react";
 import interactionPlugin from "@fullcalendar/interaction";
 import dayjs from "dayjs";
+import { DateSelectArg, EventClickArg, EventInput } from "@fullcalendar/core";
 
-// --- Decode JWT utility ---
 function decodeJWT(token: string) {
   try {
     const payload = token.split(".")[1];
@@ -91,9 +87,7 @@ const Modal = ({
   );
 };
 
-const RoomPage = () => {
-  const { roomName } = useParams<{ roomName: string }>();
-  const [activeTab, setActiveTab] = useState<"data" | "reservations">("data");
+const ReservationsTab = ({ roomName }: { roomName: string }) => {
   const [events, setEvents] = useState<EventInput[]>([]);
   const [selectedInfo, setSelectedInfo] = useState<DateSelectArg | null>(null);
   const [isModalOpen, setModalOpen] = useState(false);
@@ -115,7 +109,7 @@ const RoomPage = () => {
       );
       const data = await res.json();
       const newEvents: EventInput[] = [];
-      for (const [_, dayReservations] of Object.entries(data)) {
+      for (const [, dayReservations] of Object.entries(data)) {
         for (const reservation of dayReservations as any[]) {
           newEvents.push({
             id: String(reservation.res_id),
@@ -132,14 +126,14 @@ const RoomPage = () => {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
-    if (token) {
-      const decoded = decodeJWT(token);
-      if (decoded?.scope === "1" || decoded?.scope === "2") {
-        setCanDelete(true);
+      const token = localStorage.getItem("access_token");
+      if (token) {
+        const decoded = decodeJWT(token);
+        if (decoded?.scope === "1" || decoded?.scope === "2") {
+          setCanDelete(true);
+        }
       }
-    }
-  }, [roomName]);
+    }, [roomName]);
 
   const handleDateSelect = (selectInfo: DateSelectArg) => {
     setSelectedInfo(selectInfo);
@@ -212,82 +206,37 @@ const RoomPage = () => {
   };
 
   return (
-    <div style={{ maxWidth: 1000, margin: "2rem auto", fontFamily: "sans-serif" }}>
-      <header
-        style={{
-          display: "flex",
-          border: "1px solid #ddd",
-          borderRadius: "8px",
-          overflow: "hidden",
-          marginBottom: "2rem",
+    <div>
+      <h2 style={{ marginBottom: "1rem" }}>Weekly Schedule for {roomName}</h2>
+      <FullCalendar
+        plugins={[timeGridPlugin, interactionPlugin]}
+        initialView="timeGridWeek"
+        events={events}
+        editable={false}
+        selectable={true}
+        select={handleDateSelect}
+        eventClick={handleEventClick}
+        allDaySlot={false}
+        height="auto"
+        slotMinTime="08:00:00"
+        slotMaxTime="20:00:00"
+        headerToolbar={{
+          left: "prev,next today",
+          center: "title",
+          right: "timeGridWeek,timeGridDay",
         }}
-      >
-        {["data", "reservations"].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab as any)}
-            style={{
-              flex: 1,
-              background: activeTab === tab ? "#007bff" : "white",
-              color: activeTab === tab ? "white" : "#555",
-              border: "none",
-              padding: "1rem",
-              fontWeight: 600,
-              fontSize: "1rem",
-              cursor: "pointer",
-              transition: "background 0.3s, color 0.3s",
-            }}
-          >
-            {tab[0].toUpperCase() + tab.slice(1)}
-          </button>
-        ))}
-      </header>
-
-      {activeTab === "data" && (
-        <main style={{ textAlign: "center", fontSize: "1.2rem", color: "#333" }}>
-          <p>
-            <strong>Room:</strong> {roomName}
-          </p>
-          <p>
-            <strong>Active Tab:</strong> Data
-          </p>
-        </main>
-      )}
-
-      {activeTab === "reservations" && (
-        <div>
-          <h2 style={{ marginBottom: "1rem" }}>Weekly Schedule for {roomName}</h2>
-          <FullCalendar
-            plugins={[timeGridPlugin, interactionPlugin]}
-            initialView="timeGridWeek"
-            events={events}
-            editable={false}
-            selectable={true}
-            select={handleDateSelect}
-            eventClick={handleEventClick}
-            allDaySlot={false}
-            height="auto"
-            slotMinTime="08:00:00"
-            slotMaxTime="20:00:00"
-            headerToolbar={{
-              left: "prev,next today",
-              center: "title",
-              right: "timeGridWeek,timeGridDay",
-            }}
-            datesSet={handleDatesSet}
-          />
-          <Modal
-            isOpen={isModalOpen}
-            onClose={() => {
-              setSelectedInfo(null);
-              setModalOpen(false);
-            }}
-            onSubmit={handleModalSubmit}
-          />
-        </div>
-      )}
+        datesSet={handleDatesSet}
+      />
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setSelectedInfo(null);
+          setModalOpen(false);
+        }}
+        onSubmit={handleModalSubmit}
+      />
     </div>
   );
 };
 
-export default RoomPage;
+export default ReservationsTab;
