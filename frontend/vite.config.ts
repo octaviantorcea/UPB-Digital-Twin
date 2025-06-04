@@ -25,6 +25,21 @@ export default defineConfig({
         target: 'http://localhost:29204',
         changeOrigin: true,
         secure: false
+      },
+      '/get_reservations': {
+        target: 'http://localhost:29203',
+        changeOrigin: true,
+        secure: false
+      },
+      '/reserve': {
+        target: 'http://localhost:29203',
+        changeOrigin: true,
+        secure: false
+      },
+      '/delete_reservation': {
+        target: 'http://localhost:29203',
+        changeOrigin: true,
+        secure: false
       }
     }
   }

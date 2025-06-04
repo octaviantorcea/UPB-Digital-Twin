@@ -19,7 +19,6 @@ function decodeJWT(token: string) {
   }
 }
 
-// --- Modal component (same as previous version) ---
 const Modal = ({
   isOpen,
   onClose,
@@ -64,7 +63,7 @@ const Modal = ({
             border: "1px solid #ccc",
             borderRadius: "4px",
           }}
-          placeholder="Meeting with team"
+          placeholder="Reservation"
         />
         <div style={{ display: "flex", justifyContent: "flex-end", gap: "1rem" }}>
           <button onClick={onClose} style={{ padding: "0.5rem 1rem" }}>
@@ -99,8 +98,42 @@ const RoomPage = () => {
   const [isModalOpen, setModalOpen] = useState(false);
   const [canDelete, setCanDelete] = useState(false);
 
+  const fetchReservations = async () => {
+    const token = localStorage.getItem("access_token");
+    if (!token || !roomName) return;
+
+    const now = dayjs();
+    const start = now.startOf("week").format("YYYY-MM-DD");
+    const end = now.endOf("week").format("YYYY-MM-DD");
+
+    try {
+      const res = await fetch(
+        `/get_reservations?start_date=${start}&end_date=${end}&room_name=${roomName}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const data = await res.json();
+      const newEvents: EventInput[] = [];
+      for (const [_, dayReservations] of Object.entries(data)) {
+        for (const reservation of dayReservations as any[]) {
+          newEvents.push({
+            id: String(reservation.res_id),
+            title: reservation.title || "Reserved",
+            start: reservation.start_date,
+            end: reservation.end_date,
+          });
+        }
+      }
+      setEvents(newEvents);
+    } catch (err) {
+      console.error("Failed to fetch reservations", err);
+    }
+  };
+
   useEffect(() => {
-    // Load token and decode
     const token = localStorage.getItem("access_token");
     if (token) {
       const decoded = decodeJWT(token);
@@ -109,56 +142,70 @@ const RoomPage = () => {
       }
     }
 
-    // Sample events
-    setEvents([
-      {
-        id: "1",
-        title: "Team Sync",
-        start: dayjs().hour(10).minute(0).toISOString(),
-        end: dayjs().hour(11).minute(0).toISOString(),
-      },
-      {
-        id: "2",
-        title: "Design Review",
-        start: dayjs().add(1, "day").hour(14).minute(0).toISOString(),
-        end: dayjs().add(1, "day").hour(15).minute(0).toISOString(),
-      },
-    ]);
-  }, []);
+    fetchReservations();
+  }, [roomName]);
 
   const handleDateSelect = (selectInfo: DateSelectArg) => {
     setSelectedInfo(selectInfo);
     setModalOpen(true);
   };
 
-  const handleModalSubmit = (title: string) => {
-    if (selectedInfo && title) {
-      const newEvent: EventInput = {
-        id: String(events.length + 1),
-        title,
-        start: selectedInfo.startStr,
-        end: selectedInfo.endStr,
-      };
-      setEvents((prev) => [...prev, newEvent]);
+  const handleModalSubmit = async (title: string) => {
+    const token = localStorage.getItem("access_token");
+    if (!selectedInfo || !token || !roomName) return;
+
+    try {
+      await fetch("/reserve", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          room_name: roomName,
+          start_date: selectedInfo.startStr,
+          end_date: selectedInfo.endStr,
+          title: title,
+        }),
+      });
+      await fetchReservations();
+    } catch (err) {
+      console.error("Failed to make reservation", err);
     }
+
     setSelectedInfo(null);
     setModalOpen(false);
   };
 
-  const handleEventClick = (clickInfo: EventClickArg) => {
+  const handleEventClick = async (clickInfo: EventClickArg) => {
     if (!canDelete) return;
 
     const confirmDelete = confirm(
       `Are you sure you want to delete "${clickInfo.event.title}"?`
     );
-    if (confirmDelete) {
-      setEvents((prev) => prev.filter((e) => e.id !== clickInfo.event.id));
+    if (!confirmDelete) return;
+
+    const token = localStorage.getItem("access_token");
+    if (!token || !roomName) return;
+
+    try {
+      await fetch(
+        `/delete_reservation?reservation_id=${clickInfo.event.id}&room_name=${roomName}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      await fetchReservations();
+    } catch (err) {
+      console.error("Failed to delete reservation", err);
     }
   };
 
   return (
     <div style={{ maxWidth: 1000, margin: "2rem auto", fontFamily: "sans-serif" }}>
-      {/* Tabs */}
       <header
         style={{
           display: "flex",

@@ -11,8 +11,13 @@ engine = create_engine(os.getenv("DATABASE_URL"), echo=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
+_room_table_cache = {}
+
 
 def create_room_table(room_name: str):
+    if room_name in _room_table_cache:
+        return _room_table_cache[room_name]
+
     class RoomReservation(Base):
         __tablename__ = room_name
         __table_args__ = {'extend_existing': True}
@@ -21,7 +26,10 @@ def create_room_table(room_name: str):
         day_of_reservation = Column(Date, nullable=False)
         start_time = Column(Time, nullable=False)
         end_time = Column(Time, nullable=False)
+        title = Column(String, nullable=False)
         reserved_by = Column(String, nullable=False)
+        reserved_by_id = Column(Integer, nullable=False)
         created_at = Column(DateTime, default=datetime.now())
 
+    _room_table_cache[room_name] = RoomReservation
     return RoomReservation

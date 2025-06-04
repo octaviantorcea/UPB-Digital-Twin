@@ -32,7 +32,9 @@ def _process_reservations():
         room_name = reservation.room_name
         start_date = reservation.start_date
         end_date = reservation.end_date
-        reserved_by = reservation.name
+        reserved_by = reservation.reserved_by
+        title = reservation.title
+        reserved_by_id = reservation.user_id
 
         day_of_reservation = start_date.date()
         start_time = start_date.time()
@@ -65,7 +67,9 @@ def _process_reservations():
                 day_of_reservation=day_of_reservation,
                 start_time=start_time,
                 end_time=end_time,
-                reserved_by=reserved_by
+                reserved_by=reserved_by,
+                reserved_by_id=reserved_by_id,
+                title=title,
             )
             db.add(reservation)
 
@@ -88,15 +92,41 @@ def reserve_room(
     is_teacher: Annotated[bool, Security(get_authorization, scopes=[Scopes.TEACHER])],
     current_user: Annotated[TokenModel, Depends(get_current_user)],
 ):
-    if not is_teacher:
-        raise HTTPException(status_code=403, detail="Only teachers can reserve")
+    # if not is_teacher:
+    #     raise HTTPException(status_code=403, detail="Only teachers can reserve")
 
-    reservation.name = f"{current_user.first_name} {current_user.last_name}"
+    reservation.reserved_by = f"{current_user.first_name} {current_user.last_name}"
+    reservation.user_id = current_user.username_id
 
     res_future = Future()
     reservation_queue.put((res_future, reservation))
 
     return res_future.result()
+
+
+@app.delete("/delete_reservation")
+def delete_reservation(
+    reservation_id: int,
+    room_name: str,
+    is_teacher: Annotated[bool, Security(get_authorization, scopes=[Scopes.TEACHER])],
+    current_user: Annotated[TokenModel, Depends(get_current_user)],
+):
+    if not is_teacher:
+        raise HTTPException(status_code=403, detail="You do not have permission to delete reservation.")
+
+    inspector = inspect(engine)
+    if not inspector.has_table(room_name):
+        return
+
+    db = SessionLocal()
+
+    try:
+        db.query(create_room_table(room_name)).filter_by(id=reservation_id).delete()
+        db.commit()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        db.close()
 
 
 def _get_reservations(db, RoomReservation, start_date, end_date) -> dict[date, list[ReservationResponse]]:
@@ -119,13 +149,31 @@ def _get_reservations(db, RoomReservation, start_date, end_date) -> dict[date, l
                 room_name=room_name,
                 start_date=datetime.combine(day, reservation.start_time),
                 end_date=datetime.combine(day, reservation.end_time),
-                name=reservation.reserved_by,
+                title=reservation.title,
+                reserved_by=reservation.reserved_by,
                 day=day,
                 created_at=reservation.created_at,
+                user_id=reservation.reserved_by_id,
+                res_id=reservation.id
             )
         )
 
     return reservations_by_day
+
+
+@app.get("/get_reservations")
+def get_reservations(start_date: date, end_date: date, room_name: str) -> dict[date, list[ReservationResponse]]:
+    RoomReservation = create_room_table(room_name)
+    db = SessionLocal()
+
+    try:
+        inspector = inspect(engine)
+        if not inspector.has_table(room_name):
+            return {}
+
+        return _get_reservations(db, RoomReservation, start_date, end_date)
+    finally:
+        db.close()
 
 
 def _get_end_date(start_date: date, time_interval: TimeInterval) -> date:
@@ -194,7 +242,7 @@ def show_reservations(
             for reservation in reservations:
                 time_interval = (f"{reservation.start_date.time().strftime('%H:%M')} - "
                                  f"{reservation.end_date.time().strftime('%H:%M')}")
-                table += f"{time_interval:<20} | {reservation.name:<15}\n"
+                table += f"{time_interval:<20} | {reservation.reserved_by:<15}\n"
 
             table += "-" * 40 + "\n"
             result.append(table)

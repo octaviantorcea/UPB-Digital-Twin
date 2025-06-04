@@ -9,7 +9,9 @@ class ReservationRequest(BaseModel):
     room_name: str
     start_date: datetime
     end_date: datetime
-    name: Optional[str] = None
+    title: str = None
+    reserved_by: Optional[str] = None
+    user_id: Optional[int] = None
 
 
 class TimeInterval(Enum):
@@ -21,3 +23,4 @@ class TimeInterval(Enum):
 class ReservationResponse(ReservationRequest):
     day: date
     created_at: datetime
+    res_id: int
