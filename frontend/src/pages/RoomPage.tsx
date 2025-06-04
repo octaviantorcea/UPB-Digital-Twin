@@ -4,6 +4,7 @@ import FullCalendar from "@fullcalendar/react";
 import DateSelectArg from "@fullcalendar/react";
 import EventClickArg from "@fullcalendar/react";
 import EventInput from "@fullcalendar/react";
+import DatesSetArg from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import dayjs from "dayjs";
@@ -97,14 +98,11 @@ const RoomPage = () => {
   const [selectedInfo, setSelectedInfo] = useState<DateSelectArg | null>(null);
   const [isModalOpen, setModalOpen] = useState(false);
   const [canDelete, setCanDelete] = useState(false);
+  const [currentRange, setCurrentRange] = useState<{ start: string; end: string } | null>(null);
 
-  const fetchReservations = async () => {
+  const fetchReservations = async (start: string, end: string) => {
     const token = localStorage.getItem("access_token");
     if (!token || !roomName) return;
-
-    const now = dayjs();
-    const start = now.startOf("week").format("YYYY-MM-DD");
-    const end = now.endOf("week").format("YYYY-MM-DD");
 
     try {
       const res = await fetch(
@@ -141,8 +139,6 @@ const RoomPage = () => {
         setCanDelete(true);
       }
     }
-
-    fetchReservations();
   }, [roomName]);
 
   const handleDateSelect = (selectInfo: DateSelectArg) => {
@@ -168,7 +164,10 @@ const RoomPage = () => {
           title: title,
         }),
       });
-      await fetchReservations();
+
+      if (currentRange) {
+        await fetchReservations(currentRange.start, currentRange.end);
+      }
     } catch (err) {
       console.error("Failed to make reservation", err);
     }
@@ -180,9 +179,7 @@ const RoomPage = () => {
   const handleEventClick = async (clickInfo: EventClickArg) => {
     if (!canDelete) return;
 
-    const confirmDelete = confirm(
-      `Are you sure you want to delete "${clickInfo.event.title}"?`
-    );
+    const confirmDelete = confirm(`Are you sure you want to delete "${clickInfo.event.title}"?`);
     if (!confirmDelete) return;
 
     const token = localStorage.getItem("access_token");
@@ -198,10 +195,20 @@ const RoomPage = () => {
           },
         }
       );
-      await fetchReservations();
+
+      if (currentRange) {
+        await fetchReservations(currentRange.start, currentRange.end);
+      }
     } catch (err) {
       console.error("Failed to delete reservation", err);
     }
+  };
+
+  const handleDatesSet = (arg: DatesSetArg) => {
+    const start = dayjs(arg.start).format("YYYY-MM-DD");
+    const end = dayjs(arg.end).format("YYYY-MM-DD");
+    setCurrentRange({ start, end });
+    fetchReservations(start, end);
   };
 
   return (
@@ -267,6 +274,7 @@ const RoomPage = () => {
               center: "title",
               right: "timeGridWeek,timeGridDay",
             }}
+            datesSet={handleDatesSet}
           />
           <Modal
             isOpen={isModalOpen}
