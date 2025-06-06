@@ -35,22 +35,22 @@ const ReportTab = ({ roomName }: { roomName: string }) => {
   const [newIssueTitle, setNewIssueTitle] = useState("");
   const [newIssueDescription, setNewIssueDescription] = useState("");
 
-  useEffect(() => {
-    const fetchIssues = async () => {
-      try {
-        const response = await fetch(`/get_issues?location=${roomName}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          }
-        });
-        const data = await response.json();
-        setIssues(data);
-      } catch (error) {
-        console.error("Error fetching issues:", error);
-      }
-    };
+  const fetchIssues = async () => {
+    try {
+      const response = await fetch(`/get_issues?location=${roomName}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+      setIssues(data);
+    } catch (error) {
+      console.error("Error fetching issues:", error);
+    }
+  };
 
+  useEffect(() => {
     fetchIssues();
   }, [roomName]);
 
@@ -63,120 +63,11 @@ const ReportTab = ({ roomName }: { roomName: string }) => {
 
   const formatDate = (isoString: string) => new Date(isoString).toLocaleString();
 
-	const fetchIssues = async () => {
-		try {
-			const response = await fetch(`/get_issues?location=${roomName}`, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-			});
-			const data = await response.json();
-			setIssues(data);
-		} catch (error) {
-			console.error("Error fetching issues:", error);
-		}
-	};
-
-	useEffect(() => {
-		fetchIssues();
-	}, [roomName]);
-
   return (
     <div style={{ maxWidth: 800, margin: "0 auto", padding: "1rem" }}>
       <h2 style={{ textAlign: "center", marginBottom: "1rem" }}>
         Issues for {roomName}
       </h2>
-
-			<div style={{ textAlign: "right", marginBottom: "1rem" }}>
-				<button
-					onClick={() => setIsModalOpen(true)}
-					style={{
-						backgroundColor: "#007bff",
-						color: "white",
-						padding: "0.5rem 1rem",
-						border: "none",
-						borderRadius: "4px",
-						cursor: "pointer",
-						fontWeight: "bold",
-					}}
-				>
-					+ Report New Issue
-				</button>
-			</div>
-
-			{isModalOpen && (
-				<div style={{
-					background: "#f9f9f9",
-					padding: "1rem",
-					border: "1px solid #ccc",
-					borderRadius: "6px",
-					marginBottom: "1.5rem"
-				}}>
-					<h3>New Issue</h3>
-					<input
-						type="text"
-						placeholder="Title"
-						value={newIssueTitle}
-						onChange={(e) => setNewIssueTitle(e.target.value)}
-						style={{ width: "100%", marginBottom: "0.5rem", padding: "0.5rem" }}
-					/>
-					<textarea
-						placeholder="Description"
-						value={newIssueDescription}
-						onChange={(e) => setNewIssueDescription(e.target.value)}
-						rows={4}
-						style={{ width: "100%", marginBottom: "0.5rem", padding: "0.5rem" }}
-					/>
-					<div style={{ display: "flex", justifyContent: "flex-end", gap: "1rem" }}>
-						<button onClick={() => setIsModalOpen(false)}>Cancel</button>
-						<button
-							onClick={async () => {
-								const token = localStorage.getItem("access_token");
-								if (!token) {
-									alert("You must be logged in.");
-									return;
-								}
-
-								try {
-									const response = await fetch("/push_issue", {
-										method: "POST",
-										headers: {
-											"Content-Type": "application/json",
-											Authorization: `Bearer ${token}`,
-										},
-										body: JSON.stringify({
-											location: roomName,
-											title: newIssueTitle,
-											description: newIssueDescription,
-										}),
-									});
-
-									if (!response.ok) throw new Error("Failed to submit issue");
-
-									setNewIssueTitle("");
-									setNewIssueDescription("");
-									setIsModalOpen(false);
-									await fetchIssues(); // Re-fetch the issues list
-								} catch (err) {
-									console.error(err);
-									alert("Failed to submit issue.");
-								}
-							}}
-							style={{
-								backgroundColor: "#28a745",
-								color: "white",
-								padding: "0.5rem 1rem",
-								border: "none",
-								borderRadius: "4px",
-								fontWeight: "bold",
-							}}
-						>
-							Submit
-						</button>
-					</div>
-				</div>
-			)}
 
       {["Reported", "In Progress", "Solved"].map((status) => {
         const filtered = issues.filter((issue) => issue.status === status);
@@ -228,9 +119,7 @@ const ReportTab = ({ roomName }: { roomName: string }) => {
                         {issue.description}
                       </p>
                       <div style={{ fontSize: "0.85rem", marginTop: "0.5rem", color: "#888" }}>
-                        <span>
-                          <strong>Reported by:</strong> {issue.reporter}
-                        </span>{" "}
+                        <span><strong>Reported by:</strong> {issue.reporter}</span>{" "}
                         | <span><strong>Date:</strong> {formatDate(issue.created_at)}</span>
                       </div>
                       <details style={{ marginTop: "0.5rem" }}>
@@ -250,6 +139,119 @@ const ReportTab = ({ roomName }: { roomName: string }) => {
           </div>
         );
       })}
+
+      {/* Floating Add Button */}
+      <button
+        onClick={() => setIsModalOpen(true)}
+        style={{
+          position: "fixed",
+          bottom: "2rem",
+          right: "2rem",
+          backgroundColor: "#007bff",
+          color: "white",
+          padding: "0.75rem 1.25rem",
+          border: "none",
+          borderRadius: "50px",
+          fontSize: "1rem",
+          fontWeight: "bold",
+          cursor: "pointer",
+          boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
+          transition: "background-color 0.3s ease",
+          zIndex: 999,
+					display: "inline-block",
+					whiteSpace: "nowrap"
+        }}
+      >
+        + Report Issue
+      </button>
+
+      {/* Modal */}
+      {isModalOpen && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          height: "100vh",
+          width: "100vw",
+          backgroundColor: "rgba(0, 0, 0, 0.4)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000,
+        }}>
+          <div style={{
+            background: "#fff",
+            padding: "2rem",
+            borderRadius: "8px",
+            width: "90%",
+            maxWidth: "500px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+          }}>
+            <h3 style={{ marginTop: 0 }}>New Issue</h3>
+            <input
+              type="text"
+              placeholder="Title"
+              value={newIssueTitle}
+              onChange={(e) => setNewIssueTitle(e.target.value)}
+              style={{ width: "100%", marginBottom: "0.5rem", padding: "0.5rem" }}
+            />
+            <textarea
+              placeholder="Description"
+              value={newIssueDescription}
+              onChange={(e) => setNewIssueDescription(e.target.value)}
+              rows={4}
+              style={{ width: "100%", marginBottom: "0.5rem", padding: "0.5rem" }}
+            />
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "1rem" }}>
+              <button onClick={() => setIsModalOpen(false)}>Cancel</button>
+              <button
+                onClick={async () => {
+                  const token = localStorage.getItem("access_token");
+                  if (!token) {
+                    alert("You must be logged in.");
+                    return;
+                  }
+
+                  try {
+                    const response = await fetch("/push_issue", {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                      },
+                      body: JSON.stringify({
+                        location: roomName,
+                        title: newIssueTitle,
+                        description: newIssueDescription,
+                      }),
+                    });
+
+                    if (!response.ok) throw new Error("Failed to submit issue");
+
+                    setNewIssueTitle("");
+                    setNewIssueDescription("");
+                    setIsModalOpen(false);
+                    await fetchIssues();
+                  } catch (err) {
+                    console.error(err);
+                    alert("Failed to submit issue.");
+                  }
+                }}
+                style={{
+                  backgroundColor: "#28a745",
+                  color: "white",
+                  padding: "0.5rem 1rem",
+                  border: "none",
+                  borderRadius: "4px",
+                  fontWeight: "bold",
+                }}
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
