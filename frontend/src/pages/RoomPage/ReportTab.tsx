@@ -5,25 +5,31 @@ type Issue = {
   location: string;
   title: string;
   description: string;
-  status: "REPORTED" | "IN_PROGRESS" | "SOLVED";
+  status: "Reported" | "In Progress" | "Solved";
   reporter: string;
   created_at: string;
   comments: any[]; // Mocked for now
   score: number; // Ignored for now
 };
 
+const statusColors: Record<string, string> = {
+  "Reported": "#d9534f",       // red
+  "In Progress": "#f0ad4e",    // orange
+  "Solved": "#5cb85c",         // green
+};
+
 const statusLabels: Record<string, string> = {
-  REPORTED: "Reported",
-  IN_PROGRESS: "In Progress",
-  SOLVED: "Solved",
+  "Reported": "Reported",
+  "In Progress": "In Progress",
+  "Solved": "Solved",
 };
 
 const ReportTab = ({ roomName }: { roomName: string }) => {
   const [issues, setIssues] = useState<Issue[]>([]);
   const [expandedStatus, setExpandedStatus] = useState<Record<string, boolean>>({
-    REPORTED: true,
-    IN_PROGRESS: false,
-    SOLVED: false,
+    "Reported": true,
+    "In Progress": false,
+    "Solved": false,
   });
 
   useEffect(() => {
@@ -78,7 +84,8 @@ const ReportTab = ({ roomName }: { roomName: string }) => {
                 width: "100%",
                 textAlign: "left",
                 padding: "1rem",
-                backgroundColor: "#f7f7f7",
+                backgroundColor: statusColors[status],
+                color: "#fff",
                 border: "none",
                 fontWeight: "bold",
                 fontSize: "1.1rem",
