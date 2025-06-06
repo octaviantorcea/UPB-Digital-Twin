@@ -13,8 +13,8 @@ class IssueStatus(str, Enum):
 
 class PushIssueRequest(BaseModel):
     location: str
+    title: str
     description: str
-    receive_updates: Optional[bool] = False
 
 
 class CommentResponse(BaseModel):

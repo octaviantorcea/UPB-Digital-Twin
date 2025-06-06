@@ -17,6 +17,7 @@ class Issue(Base):
     __tablename__ = "issues"
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     location = Column(String, nullable=False)
+    title = Column(String, nullable=False)
     description = Column(String, nullable=False)
     reporter = Column(String, nullable=False)
     status = Column(String, default="Reported", nullable=False)

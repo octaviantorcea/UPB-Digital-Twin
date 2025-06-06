@@ -40,6 +40,7 @@ def push_issue(
 
     new_issue = Issue(
         location=report_request.location,
+        title=report_request.title,
         description=report_request.description,
         reporter=f"{current_user.first_name} {current_user.last_name}"
     )
@@ -173,16 +174,16 @@ def downvote_issue(
 
 @app.post("/get_issues")
 def get_issues(
-    issues_ids: Optional[List[int]] = None,
+    location: Optional[str] = None,
     db: Session = Depends(_get_db)
 ) -> List[IssueResponse]:
-    if issues_ids:
-        issues = db.query(Issue).filter(Issue.id.in_(issues_ids)).all()
+    if location:
+        issues = db.query(Issue).filter_by(location=location).all()
     else:
         issues = db.query(Issue).all()
 
     if not issues:
-        raise HTTPException(status_code=404, detail="Issues not found")
+        return []
 
     result = []
     for issue in issues:
@@ -195,6 +196,7 @@ def get_issues(
             IssueResponse(
                 id=issue.id,
                 location=issue.location,
+                title=issue.title,
                 description=issue.description,
                 reporter=issue.reporter,
                 status=issue.status,

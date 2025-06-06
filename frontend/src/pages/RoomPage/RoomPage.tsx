@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import DataTab from "./DataTab";
-import ReservationsTab from "./ReservationsTab";
+import ScheduleTab from "./ScheduleTab";
+import ReportTab from "./ReportTab";
 
 const RoomPage = () => {
   const { roomName } = useParams<{ roomName: string }>();
-  const [activeTab, setActiveTab] = useState<"data" | "reservations">("data");
+  const [activeTab, setActiveTab] = useState<"data" | "schedule" | "report a problem">("data");
 
   return (
     <div style={{ maxWidth: 1000, margin: "2rem auto", fontFamily: "sans-serif" }}>
@@ -18,7 +19,7 @@ const RoomPage = () => {
           marginBottom: "2rem",
         }}
       >
-        {["data", "reservations"].map((tab) => (
+        {["data", "schedule", "report a problem"].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab as any)}
@@ -40,7 +41,8 @@ const RoomPage = () => {
       </header>
 
       {activeTab === "data" && <DataTab roomName={roomName!} />}
-      {activeTab === "reservations" && <ReservationsTab roomName={roomName!} />}
+      {activeTab === "schedule" && <ScheduleTab roomName={roomName!} />}
+      {activeTab === "report a problem" && <ReportTab roomName={roomName!} />}
     </div>
   );
 };

@@ -87,7 +87,7 @@ const Modal = ({
   );
 };
 
-const ReservationsTab = ({ roomName }: { roomName: string }) => {
+const ScheduleTab = ({ roomName }: { roomName: string }) => {
   const [events, setEvents] = useState<EventInput[]>([]);
   const [selectedInfo, setSelectedInfo] = useState<DateSelectArg | null>(null);
   const [isModalOpen, setModalOpen] = useState(false);
@@ -218,8 +218,8 @@ const ReservationsTab = ({ roomName }: { roomName: string }) => {
         eventClick={handleEventClick}
         allDaySlot={false}
         height="auto"
-        slotMinTime="08:00:00"
-        slotMaxTime="20:00:00"
+        slotMinTime="07:00:00"
+        slotMaxTime="24:00:00"
         headerToolbar={{
           left: "prev,next today",
           center: "title",
@@ -239,4 +239,4 @@ const ReservationsTab = ({ roomName }: { roomName: string }) => {
   );
 };
 
-export default ReservationsTab;
+export default ScheduleTab;

@@ -40,6 +40,11 @@ export default defineConfig({
         target: 'http://localhost:29203',
         changeOrigin: true,
         secure: false
+      },
+      '/get_issues': {
+        target: 'http://localhost:29207',
+        changeOrigin: true,
+        secure: false
       }
     }
   }
