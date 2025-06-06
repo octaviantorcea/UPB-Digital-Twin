@@ -45,6 +45,11 @@ export default defineConfig({
         target: 'http://localhost:29207',
         changeOrigin: true,
         secure: false
+      },
+      '/push_issue': {
+        target: 'http://localhost:29207',
+        changeOrigin: true,
+        secure: false
       }
     }
   }
