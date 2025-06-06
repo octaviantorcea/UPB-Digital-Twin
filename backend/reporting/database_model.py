@@ -21,7 +21,7 @@ class Issue(Base):
     description = Column(String, nullable=False)
     reporter = Column(String, nullable=False)
     status = Column(String, default="Reported", nullable=False)
-    created_at = Column(DateTime, default=datetime.now(), nullable=False)
+    created_at = Column(DateTime, default=datetime.now, nullable=False)
     comments = relationship("Comment", back_populates="issue", cascade="all, delete-orphan")
     votes = relationship("Vote", back_populates="issue", cascade="all, delete-orphan")
 
@@ -32,7 +32,7 @@ class Comment(Base):
     comment = Column(String, nullable=False)
     commenter = Column(String, nullable=False)
     issue_id = Column(Integer, ForeignKey("issues.id"), nullable=False)
-    created_at = Column(DateTime, default=datetime.now(), nullable=False)
+    created_at = Column(DateTime, default=datetime.now, nullable=False)
     issue = relationship("Issue", back_populates="comments")
 
 

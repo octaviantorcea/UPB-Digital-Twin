@@ -29,7 +29,7 @@ def create_room_table(room_name: str):
         title = Column(String, nullable=False)
         reserved_by = Column(String, nullable=False)
         reserved_by_id = Column(Integer, nullable=False)
-        created_at = Column(DateTime, default=datetime.now())
+        created_at = Column(DateTime, default=datetime.now)
 
     _room_table_cache[room_name] = RoomReservation
     return RoomReservation
