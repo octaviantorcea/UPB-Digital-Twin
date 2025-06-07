@@ -162,7 +162,7 @@ const ReportTab = ({ roomName }: { roomName: string }) => {
 												<div
 													style={{
 														position: "absolute",
-        										bottom: "0.75rem",
+        										top: "0.75rem",
         										right: "1rem",
         										display: "flex",
         										flexDirection: "column",
@@ -206,14 +206,31 @@ const ReportTab = ({ roomName }: { roomName: string }) => {
 											)}
 
                       <details style={{ marginTop: "0.5rem" }}>
-                        <summary style={{ cursor: "pointer", color: "#007bff" }}>
-                          View Comments ({issue.comments.length})
-                        </summary>
-                        <div style={{ marginTop: "0.5rem", fontSize: "0.85rem", color: "#666" }}>
-                          {/* Placeholder */}
-                          <p>[Mock comments will go here]</p>
-                        </div>
-                      </details>
+												<summary style={{ cursor: "pointer", color: "#007bff" }}>
+													View Comments ({issue.comments.length})
+												</summary>
+												<div style={{ marginTop: "0.5rem", fontSize: "0.85rem", color: "#666" }}>
+													{issue.comments.length === 0 ? (
+														<p>No comments yet.</p>
+													) : (
+														issue.comments.map((comment) => (
+															<div
+																key={comment.id}
+																style={{
+																	marginBottom: "0.75rem",
+																	padding: "0.5rem",
+																	backgroundColor: "#f1f1f1",
+																	borderRadius: "4px",
+																}}
+															>
+																<strong>{comment.commenter}:</strong>
+																<p style={{ margin: "0.25rem 0 0 0" }}>{comment.comment}</p>
+															</div>
+														))
+													)}
+												</div>
+											</details>
+
                     </div>
                   ))
                 )}
