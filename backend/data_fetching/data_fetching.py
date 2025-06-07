@@ -20,6 +20,8 @@ redis_client = redis.Redis(host=os.getenv('REDIS_HOST'),
 
 KEY_DELIM = "|"
 
+available_sensors = {}
+
 
 @app.get("/historical_data")
 async def get_historical_data(
@@ -58,6 +60,12 @@ def update_real_time_data(data: List[Dict]):
         key = KEY_DELIM.join((new_entry.device_id, new_entry.sensor_type, new_entry.location))
 
         redis_client.set(key, new_entry.model_dump_json())
+
+        if new_entry.location not in available_sensors:
+            available_sensors[new_entry.location] = set()
+
+        if new_entry.sensor_type != "motion":
+            available_sensors[new_entry.location].add(new_entry.sensor_type)
 
 
 @app.get("/real_time_data")
@@ -101,6 +109,11 @@ async def get_building_plan() -> Dict[str, set[str]]:
         building_plan[floor].add(location)
 
     return building_plan
+
+
+@app.get("/available_sensors")
+async def get_available_sensors(location: str) -> list[str]:
+    return list(available_sensors[location])
 
 
 if __name__ == "__main__":

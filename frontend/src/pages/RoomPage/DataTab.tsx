@@ -31,8 +31,16 @@ type DataPoint = {
   value: number;
 };
 
+const SENSOR_LABELS: Record<string, string> = {
+  temperature: "Temperature (°C)",
+  humidity: "Humidity (%)",
+  light: "Light (lux)",
+  sound: "Sound (dB)",
+  pressure: "Air Pressure (hPa)",
+};
+
 const toLocalDateTimeString = (date: Date) => {
-  const pad = (n: number) => n.toString().padStart(2, '0');
+  const pad = (n: number) => n.toString().padStart(2, "0");
   const yyyy = date.getFullYear();
   const mm = pad(date.getMonth() + 1);
   const dd = pad(date.getDate());
@@ -42,7 +50,9 @@ const toLocalDateTimeString = (date: Date) => {
 };
 
 const DataTab = ({ roomName }: { roomName: string }) => {
-  const [tempData, setTempData] = useState<DataPoint[]>([]);
+  const [sensorTypes, setSensorTypes] = useState<string[]>([]);
+  const [selectedSensor, setSelectedSensor] = useState<string>("temperature");
+  const [sensorData, setSensorData] = useState<DataPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const chartRef = useRef<any>(null);
 
@@ -66,18 +76,32 @@ const DataTab = ({ roomName }: { roomName: string }) => {
     return "day";
   };
 
-  const fetchTemperatureData = async () => {
+  const fetchAvailableSensorTypes = async () => {
+    try {
+      const res = await fetch(`/available_sensors?location=${roomName}`);
+      const types = await res.json();
+      setSensorTypes(types);
+      if (!types.includes(selectedSensor)) {
+        setSelectedSensor(types[0]);
+      }
+    } catch (err) {
+      console.error("Error fetching sensor types:", err);
+    }
+  };
+
+  const fetchSensorData = async () => {
+    if (!selectedSensor) return;
     setLoading(true);
     try {
       const params = new URLSearchParams({
         location: roomName,
-        sensor_type: "temperature",
+        sensor_type: selectedSensor,
         from_date: new Date(fromDate).toISOString(),
         to_date: new Date(toDate).toISOString(),
       });
 
       const res = await fetch(`/historical_data?${params.toString()}`);
-      if (!res.ok) throw new Error("Failed to fetch temperature data");
+      if (!res.ok) throw new Error("Failed to fetch sensor data");
       const json = await res.json();
 
       const formatted = json.map((entry: any) => ({
@@ -85,7 +109,7 @@ const DataTab = ({ roomName }: { roomName: string }) => {
         value: entry.value,
       }));
 
-      setTempData(formatted);
+      setSensorData(formatted);
     } catch (err) {
       console.error(err);
     } finally {
@@ -94,8 +118,12 @@ const DataTab = ({ roomName }: { roomName: string }) => {
   };
 
   useEffect(() => {
-    fetchTemperatureData();
-  }, [roomName, fromDate, toDate]);
+    fetchAvailableSensorTypes();
+  }, [roomName]);
+
+  useEffect(() => {
+    fetchSensorData();
+  }, [selectedSensor, fromDate, toDate]);
 
   const handlePresetRange = (hoursBack: number) => {
     const now = new Date();
@@ -111,15 +139,15 @@ const DataTab = ({ roomName }: { roomName: string }) => {
   };
 
   const chartData = {
-    labels: tempData.map((d) => new Date(d.timestamp)),
+    labels: sensorData.map((d) => new Date(d.timestamp)),
     datasets: [
       {
-        label: "Temperature (°C)",
-        data: tempData.map((d) => d.value),
-        borderColor: "rgba(255, 99, 132, 1)",
-        backgroundColor: "rgba(255, 99, 132, 0.2)",
+        label: SENSOR_LABELS[selectedSensor] || selectedSensor,
+        data: sensorData.map((d) => d.value),
+        borderColor: "rgba(75, 192, 192, 1)",
+        backgroundColor: "rgba(75, 192, 192, 0.2)",
         tension: 0.1,
-        pointRadius: 4,
+        pointRadius: 3,
       },
     ],
   };
@@ -128,7 +156,7 @@ const DataTab = ({ roomName }: { roomName: string }) => {
     responsive: true,
     plugins: {
       legend: { position: "top" as const },
-      title: { display: true, text: `Temperature in ${roomName}` },
+      title: { display: true, text: `${SENSOR_LABELS[selectedSensor] || selectedSensor} in ${roomName}` },
       zoom: {
         pan: {
           enabled: true,
@@ -169,7 +197,7 @@ const DataTab = ({ roomName }: { roomName: string }) => {
         title: { display: true, text: "Time" }
       },
       y: {
-        title: { display: true, text: "Temperature (°C)" },
+        title: { display: true, text: SENSOR_LABELS[selectedSensor] || selectedSensor },
       },
     },
   };
@@ -179,6 +207,22 @@ const DataTab = ({ roomName }: { roomName: string }) => {
       <h2 style={{ textAlign: "center", marginBottom: "1rem" }}>
         Sensor Data for Room: <span style={{ color: "#007bff" }}>{roomName}</span>
       </h2>
+
+      <div style={{ display: "flex", justifyContent: "center", gap: "1rem", flexWrap: "wrap", marginBottom: "1rem" }}>
+        {sensorTypes.map((type) => (
+          <button
+            key={type}
+            onClick={() => setSelectedSensor(type)}
+            style={{
+              backgroundColor: selectedSensor === type ? "#007bff" : "#ccc",
+              color: selectedSensor === type ? "#fff" : "#000",
+              fontWeight: selectedSensor === type ? "bold" : "normal",
+            }}
+          >
+            {SENSOR_LABELS[type] || type}
+          </button>
+        ))}
+      </div>
 
       <div
         style={{
@@ -226,11 +270,13 @@ const DataTab = ({ roomName }: { roomName: string }) => {
       </div>
 
       {loading ? (
-        <p style={{ textAlign: "center", color: "#666" }}>Loading temperature data...</p>
-      ) : tempData.length === 0 ? (
-        <p style={{ textAlign: "center", color: "#999" }}>No temperature data available.</p>
+        <p style={{ textAlign: "center", color: "#666" }}>Loading sensor data...</p>
+      ) : sensorData.length === 0 ? (
+        <p style={{ textAlign: "center", color: "#999" }}>No data available for selected sensor.</p>
       ) : (
-        <Line ref={chartRef} data={chartData} options={chartOptions} />
+        <div className="chart-container">
+          <Line ref={chartRef} data={chartData} options={chartOptions} />
+        </div>
       )}
     </main>
   );

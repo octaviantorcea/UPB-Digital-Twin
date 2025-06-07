@@ -70,6 +70,11 @@ export default defineConfig({
         target: 'http://localhost:29204',
         changeOrigin: true,
         secure: false
+      },
+      '/available_sensors': {
+        target: 'http://localhost:29204',
+        changeOrigin: true,
+        secure: false
       }
     }
   }
