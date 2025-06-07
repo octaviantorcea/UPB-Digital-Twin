@@ -9,7 +9,7 @@ import {
   CategoryScale,
   Tooltip,
   Legend,
-  TimeScale,
+  TimeScale
 } from "chart.js";
 import zoomPlugin from "chartjs-plugin-zoom";
 import "chartjs-adapter-date-fns";
@@ -51,6 +51,20 @@ const DataTab = ({ roomName }: { roomName: string }) => {
 
   const [fromDate, setFromDate] = useState(toLocalDateTimeString(defaultFrom));
   const [toDate, setToDate] = useState(toLocalDateTimeString(now));
+
+  const determineTimeUnit = (start: number, end: number) => {
+    const rangeMs = end - start;
+    const oneMinute = 60 * 1000;
+    const oneHour = 60 * oneMinute;
+    const oneDay = 24 * oneHour;
+    const oneWeek = 7 * oneDay;
+
+    if (rangeMs < oneMinute) return "second";
+    if (rangeMs < oneHour) return "minute";
+    if (rangeMs < oneDay) return "hour";
+    if (rangeMs < oneWeek) return "day";
+    return "day";
+  };
 
   const fetchTemperatureData = async () => {
     setLoading(true);
@@ -116,11 +130,32 @@ const DataTab = ({ roomName }: { roomName: string }) => {
       legend: { position: "top" as const },
       title: { display: true, text: `Temperature in ${roomName}` },
       zoom: {
-        pan: { enabled: true, mode: "x" as const },
+        pan: {
+          enabled: true,
+          mode: "x" as const,
+          onPanComplete: ({ chart }: any) => {
+            const xAxis = chart.scales.x;
+            const unit = determineTimeUnit(xAxis.min, xAxis.max);
+            
+            if (chart.options.scales.x.time.unit !== unit) {
+              chart.options.scales.x.time.unit = unit;
+              chart.update("none");
+            }
+          },
+        },
         zoom: {
           wheel: { enabled: true },
           pinch: { enabled: true },
           mode: "x" as const,
+          onZoomComplete: ({ chart }: any) => {
+            const xAxis = chart.scales.x;
+            const unit = determineTimeUnit(xAxis.min, xAxis.max);
+            
+            if (chart.options.scales.x.time.unit !== unit) {
+              chart.options.scales.x.time.unit = unit;
+              chart.update("none");
+            }
+          },
         },
       },
     },
@@ -129,9 +164,9 @@ const DataTab = ({ roomName }: { roomName: string }) => {
         type: "time" as const,
         time: {
           unit: "minute",
-          tooltipFormat: "MMM d, h:mm a",
+          tooltipFormat: "MMM d, h:mm:ss a",
         },
-        title: { display: true, text: "Time" },
+        title: { display: true, text: "Time" }
       },
       y: {
         title: { display: true, text: "Temperature (°C)" },
