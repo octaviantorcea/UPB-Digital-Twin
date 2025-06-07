@@ -93,6 +93,8 @@ const ScheduleTab = ({ roomName }: { roomName: string }) => {
   const [isModalOpen, setModalOpen] = useState(false);
   const [canDelete, setCanDelete] = useState(false);
   const [currentRange, setCurrentRange] = useState<{ start: string; end: string } | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const fetchReservations = async (start: string, end: string) => {
     const token = localStorage.getItem("access_token");
@@ -144,30 +146,36 @@ const ScheduleTab = ({ roomName }: { roomName: string }) => {
     const token = localStorage.getItem("access_token");
     if (!selectedInfo || !token || !roomName) return;
 
-    try {
-      await fetch("/reserve", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          room_name: roomName,
-          start_date: selectedInfo.startStr,
-          end_date: selectedInfo.endStr,
-          title: title,
-        }),
-      });
+    setIsSubmitting(true);
+      try {
+        await fetch("/reserve", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            room_name: roomName,
+            start_date: selectedInfo.startStr,
+            end_date: selectedInfo.endStr,
+            title: title,
+          }),
+        });
 
-      if (currentRange) {
-        await fetchReservations(currentRange.start, currentRange.end);
+        if (currentRange) {
+          await fetchReservations(currentRange.start, currentRange.end);
+        }
+
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 2000);
+      } catch (err) {
+        console.error("Failed to make reservation", err);
+        alert("Failed to make reservation.");
+      } finally {
+        setSelectedInfo(null);
+        setModalOpen(false);
+        setIsSubmitting(false);
       }
-    } catch (err) {
-      console.error("Failed to make reservation", err);
-    }
-
-    setSelectedInfo(null);
-    setModalOpen(false);
   };
 
   const handleEventClick = async (clickInfo: EventClickArg) => {
@@ -179,6 +187,7 @@ const ScheduleTab = ({ roomName }: { roomName: string }) => {
     const token = localStorage.getItem("access_token");
     if (!token || !roomName) return;
 
+    setIsSubmitting(true);
     try {
       await fetch(
         `/delete_reservation?reservation_id=${clickInfo.event.id}&room_name=${roomName}`,
@@ -193,8 +202,14 @@ const ScheduleTab = ({ roomName }: { roomName: string }) => {
       if (currentRange) {
         await fetchReservations(currentRange.start, currentRange.end);
       }
+
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 2000);
     } catch (err) {
       console.error("Failed to delete reservation", err);
+      alert("Failed to delete reservation.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -235,6 +250,45 @@ const ScheduleTab = ({ roomName }: { roomName: string }) => {
         }}
         onSubmit={handleModalSubmit}
       />
+    
+      {isSubmitting && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          backgroundColor: "rgba(0,0,0,0.4)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1100,
+          color: "#fff",
+          fontSize: "1.5rem",
+          fontWeight: "bold"
+        }}>
+          Processing...
+        </div>
+      )}
+
+      {showSuccess && (
+        <div style={{
+          position: "fixed",
+          top: "20%",
+          left: "50%",
+          transform: "translateX(-50%)",
+          backgroundColor: "#28a745",
+          color: "white",
+          padding: "1rem 2rem",
+          borderRadius: "8px",
+          zIndex: 1100,
+          boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
+          fontWeight: "bold"
+        }}>
+          Success!
+        </div>
+      )}
+
     </div>
   );
 };
