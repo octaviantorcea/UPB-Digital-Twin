@@ -34,6 +34,8 @@ const ReportTab = ({ roomName }: { roomName: string }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newIssueTitle, setNewIssueTitle] = useState("");
   const [newIssueDescription, setNewIssueDescription] = useState("");
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [showSuccess, setShowSuccess] = useState(false);
 
   const fetchIssues = async () => {
     try {
@@ -206,37 +208,44 @@ const ReportTab = ({ roomName }: { roomName: string }) => {
               <button onClick={() => setIsModalOpen(false)}>Cancel</button>
               <button
                 onClick={async () => {
-                  const token = localStorage.getItem("access_token");
-                  if (!token) {
-                    alert("You must be logged in.");
-                    return;
-                  }
+									const token = localStorage.getItem("access_token");
+									if (!token) {
+										alert("You must be logged in.");
+										return;
+									}
 
-                  try {
-                    const response = await fetch("/push_issue", {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                      },
-                      body: JSON.stringify({
-                        location: roomName,
-                        title: newIssueTitle,
-                        description: newIssueDescription,
-                      }),
-                    });
+									setIsSubmitting(true);
+									try {
+										const response = await fetch("/push_issue", {
+											method: "POST",
+											headers: {
+												"Content-Type": "application/json",
+												Authorization: `Bearer ${token}`,
+											},
+											body: JSON.stringify({
+												location: roomName,
+												title: newIssueTitle,
+												description: newIssueDescription,
+											}),
+										});
 
-                    if (!response.ok) throw new Error("Failed to submit issue");
+										if (!response.ok) throw new Error("Failed to submit issue");
 
-                    setNewIssueTitle("");
-                    setNewIssueDescription("");
-                    setIsModalOpen(false);
-                    await fetchIssues();
-                  } catch (err) {
-                    console.error(err);
-                    alert("Failed to submit issue.");
-                  }
-                }}
+										setNewIssueTitle("");
+										setNewIssueDescription("");
+										setIsModalOpen(false);
+										setShowSuccess(true);
+										await fetchIssues();
+										
+										setTimeout(() => setShowSuccess(false), 2000); // hide after 3s
+									} catch (err) {
+										console.error(err);
+										alert("Failed to submit issue.");
+									} finally {
+										setIsSubmitting(false);
+									}
+								}}
+
                 style={{
                   backgroundColor: "#28a745",
                   color: "white",
@@ -252,6 +261,45 @@ const ReportTab = ({ roomName }: { roomName: string }) => {
           </div>
         </div>
       )}
+
+			{isSubmitting && (
+				<div style={{
+					position: "fixed",
+					top: 0,
+					left: 0,
+					width: "100vw",
+					height: "100vh",
+					backgroundColor: "rgba(0,0,0,0.4)",
+					display: "flex",
+					alignItems: "center",
+					justifyContent: "center",
+					zIndex: 1100,
+					color: "#fff",
+					fontSize: "1.5rem",
+					fontWeight: "bold"
+				}}>
+					Submitting...
+				</div>
+			)}
+
+			{showSuccess && (
+				<div style={{
+					position: "fixed",
+					top: "20%",
+					left: "50%",
+					transform: "translateX(-50%)",
+					backgroundColor: "#28a745",
+					color: "white",
+					padding: "1rem 2rem",
+					borderRadius: "8px",
+					zIndex: 1100,
+					boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
+					fontWeight: "bold"
+				}}>
+					Issue submitted successfully!
+				</div>
+			)}
+
     </div>
   );
 };
