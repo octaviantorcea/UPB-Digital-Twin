@@ -39,6 +39,14 @@ const SENSOR_LABELS: Record<string, string> = {
   pressure: "Air Pressure (hPa)",
 };
 
+const SENSOR_COLORS: Record<string, string> = {
+  temperature: "#d9534f",
+  humidity: "#0275d8",
+  pressure: "#5cb85c",
+  light: "#f39c12",
+  sound: "#555651",
+};
+
 const toLocalDateTimeString = (date: Date) => {
   const pad = (n: number) => n.toString().padStart(2, "0");
   const yyyy = date.getFullYear();
@@ -138,14 +146,15 @@ const DataTab = ({ roomName }: { roomName: string }) => {
     }
   };
 
+  const color = SENSOR_COLORS[selectedSensor] || "rgba(75,192,192,1)";
   const chartData = {
     labels: sensorData.map((d) => new Date(d.timestamp)),
     datasets: [
       {
         label: SENSOR_LABELS[selectedSensor] || selectedSensor,
         data: sensorData.map((d) => d.value),
-        borderColor: "rgba(75, 192, 192, 1)",
-        backgroundColor: "rgba(75, 192, 192, 0.2)",
+        borderColor: color,
+        backgroundColor: `${color}33`,
         tension: 0.1,
         pointRadius: 3,
       },
