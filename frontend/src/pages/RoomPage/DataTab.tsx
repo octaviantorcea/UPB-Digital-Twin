@@ -118,8 +118,8 @@ const DataTab = ({ roomName }: { roomName: string }) => {
         data: tempData.map((d) => d.value),
         borderColor: "rgba(255, 99, 132, 1)",
         backgroundColor: "rgba(255, 99, 132, 0.2)",
-        tension: 0.2,
-        pointRadius: 2,
+        tension: 0.1,
+        pointRadius: 4,
       },
     ],
   };
@@ -175,7 +175,7 @@ const DataTab = ({ roomName }: { roomName: string }) => {
   };
 
   return (
-    <main style={{ padding: "2rem", maxWidth: "950px", margin: "0 auto" }}>
+    <main style={{ padding: "2rem", width: "100%" }}>
       <h2 style={{ textAlign: "center", marginBottom: "1rem" }}>
         Sensor Data for Room: <span style={{ color: "#007bff" }}>{roomName}</span>
       </h2>
