@@ -31,6 +31,16 @@ type DataPoint = {
   value: number;
 };
 
+const toLocalDateTimeString = (date: Date) => {
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  const yyyy = date.getFullYear();
+  const mm = pad(date.getMonth() + 1);
+  const dd = pad(date.getDate());
+  const hh = pad(date.getHours());
+  const min = pad(date.getMinutes());
+  return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+};
+
 const DataTab = ({ roomName }: { roomName: string }) => {
   const [tempData, setTempData] = useState<DataPoint[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,8 +49,8 @@ const DataTab = ({ roomName }: { roomName: string }) => {
   const now = new Date();
   const defaultFrom = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-  const [fromDate, setFromDate] = useState(defaultFrom.toISOString().slice(0, 16));
-  const [toDate, setToDate] = useState(now.toISOString().slice(0, 16));
+  const [fromDate, setFromDate] = useState(toLocalDateTimeString(defaultFrom));
+  const [toDate, setToDate] = useState(toLocalDateTimeString(now));
 
   const fetchTemperatureData = async () => {
     setLoading(true);
@@ -76,8 +86,8 @@ const DataTab = ({ roomName }: { roomName: string }) => {
   const handlePresetRange = (hoursBack: number) => {
     const now = new Date();
     const from = new Date(now.getTime() - hoursBack * 60 * 60 * 1000);
-    setFromDate(from.toISOString().slice(0, 16));
-    setToDate(now.toISOString().slice(0, 16));
+    setFromDate(toLocalDateTimeString(from));
+    setToDate(toLocalDateTimeString(now));
   };
 
   const resetZoom = () => {
