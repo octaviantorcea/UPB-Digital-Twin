@@ -8,7 +8,8 @@ from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
 
 from backend.reporting.database_model import SessionLocal, Issue, Comment, Vote
-from backend.reporting.web_model import PushIssueRequest, IssueStatus, CommentResponse, IssueResponse
+from backend.reporting.web_model import PushIssueRequest, IssueStatus, CommentResponse, IssueResponse, \
+    PostCommentRequest
 from backend.shared_models.scopes import Scopes
 from backend.shared_models.token import TokenModel
 from backend.utils.auth import get_authorization, get_current_user
@@ -94,24 +95,23 @@ def resolve_issue(
 
 @app.post("/comment")
 def add_comment(
-    issue_id: int,
+    post_comment_request: PostCommentRequest,
     is_registered: Annotated[bool, Security(get_authorization, scopes=[Scopes.STUDENT])],
     current_user: Annotated[TokenModel, Depends(get_current_user)],
-    comment: str,
     db: Session = Depends(_get_db)
 ):
     if not is_registered:
         raise HTTPException(status_code=403, detail="Not registered")
 
-    issue = db.query(Issue).get(issue_id)
+    issue = db.query(Issue).get(post_comment_request.issue_id)
 
     if not issue:
         raise HTTPException(status_code=404, detail="Issue not found")
 
     new_comment = Comment(
-        comment=comment,
+        comment=post_comment_request.comment,
         commenter=f"{current_user.first_name} {current_user.last_name}",
-        issue_id=issue_id
+        issue_id=post_comment_request.issue_id
     )
 
     db.add(new_comment)

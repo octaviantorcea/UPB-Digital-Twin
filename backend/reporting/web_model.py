@@ -17,6 +17,11 @@ class PushIssueRequest(BaseModel):
     description: str
 
 
+class PostCommentRequest(BaseModel):
+    issue_id: int
+    comment: str
+
+
 class CommentResponse(BaseModel):
     id: int
     comment: str

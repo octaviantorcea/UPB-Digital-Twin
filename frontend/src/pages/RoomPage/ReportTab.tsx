@@ -8,7 +8,7 @@ type Issue = {
   status: "Reported" | "In Progress" | "Solved";
   reporter: string;
   created_at: string;
-  comments: any[]; // Mocked for now
+  comments: any[];
   score: number; // Ignored for now
 };
 
@@ -37,6 +37,7 @@ const ReportTab = ({ roomName }: { roomName: string }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 	const isAdmin = (localStorage.scope === '2')
+	const [commentInputs, setCommentInputs] = useState<Record<number, string>>({});
 
   const fetchIssues = async () => {
     try {
@@ -95,6 +96,43 @@ const ReportTab = ({ roomName }: { roomName: string }) => {
       setIsSubmitting(false);
     }
   };
+
+	const handleCommentChange = (issueId: number, value: string) => {
+  	setCommentInputs((prev) => ({ ...prev, [issueId]: value }));
+	};
+
+	const submitComment = async (issueId: number) => {
+		const comment = commentInputs[issueId];
+		if (!comment || !comment.trim()) return alert("Comment cannot be empty.");
+
+		const token = localStorage.getItem("access_token");
+		if (!token) return alert("You must be logged in to comment.");
+
+		setIsSubmitting(true)
+		try {
+			const response = await fetch("/comment", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${token}`,
+				},
+				body: JSON.stringify({
+					issue_id: issueId,
+					comment: comment.trim(),
+				}),
+			});
+			if (!response.ok) throw new Error("Failed to submit comment");
+			setCommentInputs((prev) => ({ ...prev, [issueId]: "" }));
+			await fetchIssues(); // Refresh issues with new comments
+
+      setTimeout(() => setShowSuccess(false), 2000);
+		} catch (err) {
+			console.error(err);
+			alert("Failed to submit comment.");
+		} finally {
+			setIsSubmitting(false)
+		}
+	};
 
   return (
     <div style={{ maxWidth: 800, margin: "0 auto", padding: "1rem" }}>
@@ -230,6 +268,30 @@ const ReportTab = ({ roomName }: { roomName: string }) => {
 													)}
 												</div>
 											</details>
+
+											{/* New comment input */}
+											<div style={{ marginTop: "0.5rem", display: "flex", gap: "0.5rem" }}>
+												<input
+													type="text"
+													placeholder="Add a comment..."
+													value={commentInputs[issue.id] || ""}
+													onChange={(e) => handleCommentChange(issue.id, e.target.value)}
+													style={{ flexGrow: 1, padding: "0.5rem" }}
+												/>
+												<button
+													onClick={() => submitComment(issue.id)}
+													style={{
+														padding: "0.5rem 1rem",
+														backgroundColor: "#007bff",
+														color: "white",
+														border: "none",
+														borderRadius: "4px",
+														cursor: "pointer",
+													}}
+												>
+													Send
+												</button>
+											</div>
 
                     </div>
                   ))

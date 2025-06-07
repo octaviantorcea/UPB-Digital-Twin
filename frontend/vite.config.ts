@@ -60,6 +60,11 @@ export default defineConfig({
         target: 'http://localhost:29207',
         changeOrigin: true,
         secure: false
+      },
+      '/comment': {
+        target: 'http://localhost:29207',
+        changeOrigin: true,
+        secure: false
       }
     }
   }
