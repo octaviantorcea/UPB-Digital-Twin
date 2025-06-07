@@ -50,6 +50,16 @@ export default defineConfig({
         target: 'http://localhost:29207',
         changeOrigin: true,
         secure: false
+      },
+      '/solving_issue': {
+        target: 'http://localhost:29207',
+        changeOrigin: true,
+        secure: false
+      },
+      '/resolve_issue': {
+        target: 'http://localhost:29207',
+        changeOrigin: true,
+        secure: false
       }
     }
   }

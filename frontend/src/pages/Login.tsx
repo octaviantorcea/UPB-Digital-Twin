@@ -51,6 +51,7 @@ const Login = () => {
       const decoded: DecodedToken = jwtDecode(token);
       const fullName = `${decoded.first_name} ${decoded.last_name}`;
       localStorage.setItem("username", fullName);
+      localStorage.setItem("scope", decoded.scope)
 
       window.dispatchEvent(new Event("user-updated"))
 
