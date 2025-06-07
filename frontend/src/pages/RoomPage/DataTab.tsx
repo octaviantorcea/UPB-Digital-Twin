@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -34,12 +34,13 @@ type DataPoint = {
 const DataTab = ({ roomName }: { roomName: string }) => {
   const [tempData, setTempData] = useState<DataPoint[]>([]);
   const [loading, setLoading] = useState(true);
-  const [fromDate, setFromDate] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() - 1);
-    return d.toISOString().slice(0, 16);
-  });
-  const [toDate, setToDate] = useState(() => new Date().toISOString().slice(0, 16));
+  const chartRef = useRef<any>(null);
+
+  const now = new Date();
+  const defaultFrom = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+  const [fromDate, setFromDate] = useState(defaultFrom.toISOString().slice(0, 16));
+  const [toDate, setToDate] = useState(now.toISOString().slice(0, 16));
 
   const fetchTemperatureData = async () => {
     setLoading(true);
@@ -72,6 +73,19 @@ const DataTab = ({ roomName }: { roomName: string }) => {
     fetchTemperatureData();
   }, [roomName, fromDate, toDate]);
 
+  const handlePresetRange = (hoursBack: number) => {
+    const now = new Date();
+    const from = new Date(now.getTime() - hoursBack * 60 * 60 * 1000);
+    setFromDate(from.toISOString().slice(0, 16));
+    setToDate(now.toISOString().slice(0, 16));
+  };
+
+  const resetZoom = () => {
+    if (chartRef.current) {
+      chartRef.current.resetZoom();
+    }
+  };
+
   const chartData = {
     labels: tempData.map((d) => new Date(d.timestamp)),
     datasets: [
@@ -92,17 +106,11 @@ const DataTab = ({ roomName }: { roomName: string }) => {
       legend: { position: "top" as const },
       title: { display: true, text: `Temperature in ${roomName}` },
       zoom: {
-        pan: {
-          enabled: true,
-          mode: "x" as const,
-        },
+        pan: { enabled: true, mode: "x" as const },
         zoom: {
           wheel: { enabled: true },
           pinch: { enabled: true },
           mode: "x" as const,
-        },
-        limits: {
-          x: { min: "original", max: "original" },
         },
       },
     },
@@ -110,20 +118,8 @@ const DataTab = ({ roomName }: { roomName: string }) => {
       x: {
         type: "time" as const,
         time: {
-          unit: "hour",
+          unit: "minute",
           tooltipFormat: "MMM d, h:mm a",
-          displayFormats: {
-            hour: "MMM d, HH:mm",
-          },
-        },
-        ticks: {
-          autoSkip: false,
-          maxTicksLimit: 10,
-          callback: (val: any) =>
-            new Date(val).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
         },
         title: { display: true, text: "Time" },
       },
@@ -136,10 +132,19 @@ const DataTab = ({ roomName }: { roomName: string }) => {
   return (
     <main style={{ padding: "2rem", maxWidth: "950px", margin: "0 auto" }}>
       <h2 style={{ textAlign: "center", marginBottom: "1rem" }}>
-        Sensor Data for: <span style={{ color: "#007bff" }}>{roomName}</span>
+        Sensor Data for Room: <span style={{ color: "#007bff" }}>{roomName}</span>
       </h2>
 
-      <div style={{ marginBottom: "1rem", display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
+      <div
+        style={{
+          marginBottom: "1rem",
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "1rem",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
         <div>
           <label>From: </label>
           <input
@@ -156,11 +161,22 @@ const DataTab = ({ roomName }: { roomName: string }) => {
             onChange={(e) => setToDate(e.target.value)}
           />
         </div>
-        <button
-          onClick={() => fetchTemperatureData()}
-          style={{ padding: "0.5rem 1rem", backgroundColor: "#007bff", color: "#fff", border: "none", borderRadius: "4px" }}
-        >
-          Reload
+      </div>
+
+      <div
+        style={{
+          marginBottom: "1rem",
+          display: "flex",
+          gap: "0.5rem",
+          justifyContent: "center",
+          flexWrap: "wrap",
+        }}
+      >
+        <button onClick={() => handlePresetRange(24)}>Last Day</button>
+        <button onClick={() => handlePresetRange(24 * 7)}>Last Week</button>
+        <button onClick={() => handlePresetRange(24 * 30)}>Last Month</button>
+        <button onClick={resetZoom} style={{ fontWeight: "bold", color: "#d9534f" }}>
+          Reset Zoom
         </button>
       </div>
 
@@ -169,7 +185,7 @@ const DataTab = ({ roomName }: { roomName: string }) => {
       ) : tempData.length === 0 ? (
         <p style={{ textAlign: "center", color: "#999" }}>No temperature data available.</p>
       ) : (
-        <Line data={chartData} options={chartOptions} />
+        <Line ref={chartRef} data={chartData} options={chartOptions} />
       )}
     </main>
   );
