@@ -11,6 +11,7 @@ import {
   Legend,
   TimeScale,
 } from "chart.js";
+import zoomPlugin from "chartjs-plugin-zoom";
 import "chartjs-adapter-date-fns";
 
 ChartJS.register(
@@ -21,7 +22,8 @@ ChartJS.register(
   CategoryScale,
   Tooltip,
   Legend,
-  TimeScale
+  TimeScale,
+  zoomPlugin
 );
 
 type DataPoint = {
@@ -32,20 +34,21 @@ type DataPoint = {
 const DataTab = ({ roomName }: { roomName: string }) => {
   const [tempData, setTempData] = useState<DataPoint[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fromDate, setFromDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return d.toISOString().slice(0, 16);
+  });
+  const [toDate, setToDate] = useState(() => new Date().toISOString().slice(0, 16));
 
   const fetchTemperatureData = async () => {
     setLoading(true);
     try {
-      const now = new Date();
-      const oneDayAgo = new Date(now.getTime() - 24 * 6 * 60 * 60 * 1000);
-      const from_date = oneDayAgo.toISOString();
-      const to_date = now.toISOString();
-
       const params = new URLSearchParams({
         location: roomName,
         sensor_type: "temperature",
-        from_date: from_date,
-        to_date: to_date,
+        from_date: new Date(fromDate).toISOString(),
+        to_date: new Date(toDate).toISOString(),
       });
 
       const res = await fetch(`/historical_data?${params.toString()}`);
@@ -67,7 +70,7 @@ const DataTab = ({ roomName }: { roomName: string }) => {
 
   useEffect(() => {
     fetchTemperatureData();
-  }, [roomName]);
+  }, [roomName, fromDate, toDate]);
 
   const chartData = {
     labels: tempData.map((d) => new Date(d.timestamp)),
@@ -78,7 +81,7 @@ const DataTab = ({ roomName }: { roomName: string }) => {
         borderColor: "rgba(255, 99, 132, 1)",
         backgroundColor: "rgba(255, 99, 132, 0.2)",
         tension: 0.2,
-        pointRadius: 3,
+        pointRadius: 2,
       },
     ],
   };
@@ -87,7 +90,21 @@ const DataTab = ({ roomName }: { roomName: string }) => {
     responsive: true,
     plugins: {
       legend: { position: "top" as const },
-      title: { display: true, text: `Temperature - Last 24 Hours in ${roomName}` },
+      title: { display: true, text: `Temperature in ${roomName}` },
+      zoom: {
+        pan: {
+          enabled: true,
+          mode: "x" as const,
+        },
+        zoom: {
+          wheel: { enabled: true },
+          pinch: { enabled: true },
+          mode: "x" as const,
+        },
+        limits: {
+          x: { min: "original", max: "original" },
+        },
+      },
     },
     scales: {
       x: {
@@ -95,6 +112,18 @@ const DataTab = ({ roomName }: { roomName: string }) => {
         time: {
           unit: "hour",
           tooltipFormat: "MMM d, h:mm a",
+          displayFormats: {
+            hour: "MMM d, HH:mm",
+          },
+        },
+        ticks: {
+          autoSkip: false,
+          maxTicksLimit: 10,
+          callback: (val: any) =>
+            new Date(val).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
         },
         title: { display: true, text: "Time" },
       },
@@ -105,10 +134,35 @@ const DataTab = ({ roomName }: { roomName: string }) => {
   };
 
   return (
-    <main style={{ padding: "2rem", maxWidth: "900px", margin: "0 auto" }}>
+    <main style={{ padding: "2rem", maxWidth: "950px", margin: "0 auto" }}>
       <h2 style={{ textAlign: "center", marginBottom: "1rem" }}>
-        Sensor Data for Room: <span style={{ color: "#007bff" }}>{roomName}</span>
+        Sensor Data for: <span style={{ color: "#007bff" }}>{roomName}</span>
       </h2>
+
+      <div style={{ marginBottom: "1rem", display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
+        <div>
+          <label>From: </label>
+          <input
+            type="datetime-local"
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+          />
+        </div>
+        <div>
+          <label>To: </label>
+          <input
+            type="datetime-local"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+          />
+        </div>
+        <button
+          onClick={() => fetchTemperatureData()}
+          style={{ padding: "0.5rem 1rem", backgroundColor: "#007bff", color: "#fff", border: "none", borderRadius: "4px" }}
+        >
+          Reload
+        </button>
+      </div>
 
       {loading ? (
         <p style={{ textAlign: "center", color: "#666" }}>Loading temperature data...</p>
