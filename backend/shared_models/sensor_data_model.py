@@ -11,9 +11,9 @@ class RealTimeDataRequest(BaseModel):
 
 
 class HistDataRequest(RealTimeDataRequest):
-    from_date: Optional[str] = Field(default=None, alias='from',
+    from_date: Optional[str] = Field(default=None,
                                      description="RFC3339 format only (example: 2024-01-18T23:59:59Z)")
-    to_date: Optional[str] = Field(default=None, alias='to',
+    to_date: Optional[str] = Field(default=None,
                                    description="RFC3339 format only (example: 2024-01-18T23:59:59Z)")
 
 

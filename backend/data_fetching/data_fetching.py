@@ -28,7 +28,13 @@ async def get_historical_data(
     async with httpx.AsyncClient() as client:
         response = await client.get(
             os.getenv("HIST_SENSOR_DATA"),
-            params=hist_data_req.model_dump(exclude_none=True, exclude_unset=True, by_alias=True)
+            params={
+                "device_id": hist_data_req.device_id,
+                "sensor_type": hist_data_req.sensor_type,
+                "location": hist_data_req.location,
+                "from": hist_data_req.from_date,
+                "to": hist_data_req.to_date,
+            }
         )
         response.raise_for_status()
         return [DataResponse.model_validate(res) for res in response.json()] if response.json() else []

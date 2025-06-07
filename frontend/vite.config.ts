@@ -65,6 +65,11 @@ export default defineConfig({
         target: 'http://localhost:29207',
         changeOrigin: true,
         secure: false
+      },
+      '/historical_data': {
+        target: 'http://localhost:29204',
+        changeOrigin: true,
+        secure: false
       }
     }
   }
