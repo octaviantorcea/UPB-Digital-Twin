@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
 
+type Comment = {
+	id: number;
+	comment: string;
+	commenter: string;
+}
+
 type Issue = {
   id: number;
   location: string;
@@ -8,7 +14,7 @@ type Issue = {
   status: "Reported" | "In Progress" | "Solved";
   reporter: string;
   created_at: string;
-  comments: any[];
+  comments: Comment[];
   score: number; // Ignored for now
 };
 
