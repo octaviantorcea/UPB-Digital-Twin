@@ -86,9 +86,14 @@ async def get_building_plan() -> Dict[str, set[str]]:
     latest_data = await get_real_time_data(RealTimeDataRequest())
 
     building_plan = {}
+    set_locations = set()
 
     for (device, sensor_type, location) in latest_data:
-        floor = random.choice(FLOORS)
+        if location not in set_locations:
+            floor = random.choice(FLOORS)
+            set_locations.add(location)
+        else:
+            continue
 
         if floor not in building_plan:
             building_plan[floor] = set()
