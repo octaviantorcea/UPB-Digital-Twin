@@ -156,10 +156,18 @@ const DataTab = ({ roomName }: { roomName: string }) => {
         borderColor: color,
         backgroundColor: `${color}33`,
         tension: 0.1,
-        pointRadius: 3,
+        pointRadius: 1.75,
       },
     ],
   };
+
+  const values = sensorData.map((d) => d.value);
+  const minValue = Math.min(...values);
+  const maxValue = Math.max(...values);
+  const padding = (maxValue - minValue) * 0.1;
+
+  const paddedMin = minValue - padding;
+  const paddedMax = maxValue + padding;
 
   const chartOptions = {
     responsive: true,
@@ -207,6 +215,8 @@ const DataTab = ({ roomName }: { roomName: string }) => {
       },
       y: {
         title: { display: true, text: SENSOR_LABELS[selectedSensor] || selectedSensor },
+        min: paddedMin,
+        max: paddedMax
       },
     },
   };
