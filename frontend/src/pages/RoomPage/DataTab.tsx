@@ -195,10 +195,11 @@ const DataTab = ({ roomName }: { roomName: string }) => {
                 y: d.value,
               })),
               borderColor: color,
-              borderDash: [6, 6], // Dashed line
+              borderDash: [8, 10], // Dashed line
               backgroundColor: "transparent",
-              pointRadius: 2,
-              tension: 0.2,
+              pointRadius: 0,
+              tension: 0.1,
+              hidden: true
             },
           ]
         : []),
