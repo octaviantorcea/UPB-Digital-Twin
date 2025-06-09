@@ -61,6 +61,7 @@ const DataTab = ({ roomName }: { roomName: string }) => {
   const [sensorTypes, setSensorTypes] = useState<string[]>([]);
   const [selectedSensor, setSelectedSensor] = useState<string>("temperature");
   const [sensorData, setSensorData] = useState<DataPoint[]>([]);
+  const [predictionData, setPredictionData] = useState<DataPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const chartRef = useRef<any>(null);
 
@@ -125,12 +126,39 @@ const DataTab = ({ roomName }: { roomName: string }) => {
     }
   };
 
+  const fetchPredictionData = async () => {
+    if (!["temperature", "humidity", "pressure"].includes(selectedSensor)) {
+      setPredictionData([]);
+      return;
+    }
+    try {
+      const params = new URLSearchParams({
+        location: roomName,
+        sensor_type: selectedSensor,
+      });
+      const res = await fetch(`/last_prediction?${params.toString()}`);
+      if (!res.ok) throw new Error("Failed to fetch prediction data");
+
+      const json = await res.json();
+      const formatted = json.map((entry: any) => ({
+        timestamp: entry.timestamp,
+        value: entry.value,
+      }));
+
+      setPredictionData(formatted);
+    } catch (err) {
+      console.error("Prediction fetch error:", err);
+      setPredictionData([]);
+    }
+  };
+
   useEffect(() => {
     fetchAvailableSensorTypes();
   }, [roomName]);
 
   useEffect(() => {
     fetchSensorData();
+    fetchPredictionData();
   }, [selectedSensor, fromDate, toDate]);
 
   const handlePresetRange = (hoursBack: number) => {
@@ -158,10 +186,26 @@ const DataTab = ({ roomName }: { roomName: string }) => {
         tension: 0.1,
         pointRadius: 1.75,
       },
+      ...(predictionData.length > 0
+        ? [
+            {
+              label: `${SENSOR_LABELS[selectedSensor] || selectedSensor} (Prediction)`,
+              data: predictionData.map((d) => ({
+                x: new Date(d.timestamp),
+                y: d.value,
+              })),
+              borderColor: color,
+              borderDash: [6, 6], // Dashed line
+              backgroundColor: "transparent",
+              pointRadius: 2,
+              tension: 0.2,
+            },
+          ]
+        : []),
     ],
   };
 
-  const values = sensorData.map((d) => d.value);
+  const values = [...sensorData, ...predictionData].map((d) => d.value);
   const minValue = Math.min(...values);
   const maxValue = Math.max(...values);
   const padding = (maxValue - minValue) * 0.1;

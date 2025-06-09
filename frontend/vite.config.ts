@@ -75,6 +75,11 @@ export default defineConfig({
         target: 'http://localhost:29204',
         changeOrigin: true,
         secure: false
+      },
+      '/last_prediction': {
+        target: 'http://localhost:29209',
+        changeOrigin: true,
+        secure: false
       }
     }
   }
