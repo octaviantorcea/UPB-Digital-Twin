@@ -32,7 +32,7 @@ const Home = () => {
           fetchSensorDataForRoom(room);
         });
       });
-    }, 5000); // Poll every 5 seconds
+    }, 300000); // Poll every 5 minutes
 
     return () => clearInterval(interval);
   }, [buildingPlan]);
@@ -140,7 +140,7 @@ const Home = () => {
                     }}
                   >
                     <div style={{ fontWeight: "bold", marginBottom: "0.5rem", fontSize: "1.1rem" }}>
-                      🏠 {room}
+                      {room}
                     </div>
                     <ul style={{ paddingLeft: "1rem", color: "#555", margin: 0 }}>
                       {(roomSensorData[room] || [])
