@@ -184,7 +184,7 @@ const DataTab = ({ roomName }: { roomName: string }) => {
         borderColor: color,
         backgroundColor: `${color}33`,
         tension: 0.1,
-        pointRadius: 1.75,
+        pointRadius: 2,
       },
       ...(predictionData.length > 0
         ? [
@@ -197,7 +197,7 @@ const DataTab = ({ roomName }: { roomName: string }) => {
               borderColor: color,
               borderDash: [8, 10], // Dashed line
               backgroundColor: "transparent",
-              pointRadius: 0,
+              pointRadius: 2,
               tension: 0.1,
               hidden: true
             },
