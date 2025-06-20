@@ -37,6 +37,8 @@ const Home = () => {
 
   const navigate = useNavigate();
 
+  const preferredOrder = ["temperature", "humidity", "pressure", "light", "sound"];
+
   useEffect(() => {
     const interval = setInterval(() => {
       Object.keys(buildingPlan).forEach((floor) => {
@@ -157,6 +159,11 @@ const Home = () => {
                     <ul style={{ paddingLeft: "1rem", color: "#555", margin: 0 }}>
                       {(roomSensorData[room] || [])
                       .filter((sensor) => sensor.sensor_type.toLowerCase() !== "motion")
+                      .sort((a, b) => {
+                        const aIndex = preferredOrder.indexOf(a.sensor_type.toLowerCase());
+                        const bIndex = preferredOrder.indexOf(b.sensor_type.toLowerCase());
+                        return aIndex - bIndex;
+                      })
                       .map((sensor) => {
                         let icon = "";
                         let color = "";

@@ -107,6 +107,9 @@ def init_construct(init_data: list[DataResponse]):
     global building_plan
 
     for data_response in init_data:
+        key = KEY_DELIM.join((data_response.device_id, data_response.sensor_type, data_response.location))
+        redis_client.set(key, data_response.model_dump_json())
+
         if data_response.location not in available_sensors:
             available_sensors[data_response.location] = set()
 

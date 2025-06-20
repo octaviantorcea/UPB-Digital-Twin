@@ -273,7 +273,14 @@ const DataTab = ({ roomName }: { roomName: string }) => {
       </h2>
 
       <div style={{ display: "flex", justifyContent: "center", gap: "1rem", flexWrap: "wrap", marginBottom: "1rem" }}>
-        {sensorTypes.map((type) => (
+        {[...sensorTypes]
+          .sort((a, b) => {
+            const preferredOrder = ["temperature", "humidity", "pressure", "light", "sound"];
+            const aIndex = preferredOrder.indexOf(a);
+            const bIndex = preferredOrder.indexOf(b);
+            return aIndex - bIndex;
+          })
+          .map((type) => (
           <button
             key={type}
             onClick={() => setSelectedSensor(type)}
