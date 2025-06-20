@@ -18,6 +18,18 @@ type RoomSensorMap = {
   [roomName: string]: SensorData[];
 };
 
+const formatFloorLabel = (floor: string): string => {
+  const num = parseInt(floor, 10);
+  if (isNaN(num)) return floor;
+
+  if (num === 0) return "Ground Floor";
+  if (num === 1) return "1st Floor";
+  if (num === 2) return "2nd Floor";
+  if (num === 3) return "3rd Floor";
+  return `${num}th Floor`;
+};
+
+
 const Home = () => {
   const [buildingPlan, setBuildingPlan] = useState<BuildingPlan>({});
   const [expandedFloors, setExpandedFloors] = useState<Set<string>>(new Set());
@@ -113,7 +125,7 @@ const Home = () => {
                 backgroundColor: isExpanded ? "#f0f4f8" : "#fafafa",
               }}
             >
-              <span>{floor}</span>
+              <span>{formatFloorLabel(floor)}</span>
               <span style={{ transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
             </header>
 

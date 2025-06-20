@@ -27,3 +27,4 @@ class DataResponse(BaseModel):
     location: str
     latitude: float
     longitude: float
+    floor: int

@@ -1,5 +1,4 @@
 import os
-import random
 from typing import Dict, List, Tuple
 
 import httpx
@@ -21,6 +20,7 @@ redis_client = redis.Redis(host=os.getenv('REDIS_HOST'),
 KEY_DELIM = "|"
 
 available_sensors = {}
+building_plan = {}
 
 
 @app.get("/historical_data")
@@ -67,6 +67,11 @@ def update_real_time_data(data: List[Dict]):
         if new_entry.sensor_type != "motion":
             available_sensors[new_entry.location].add(new_entry.sensor_type)
 
+        if new_entry.floor not in building_plan:
+            building_plan[new_entry.floor] = set()
+
+        building_plan[new_entry.floor].add(new_entry.location)
+
 
 @app.get("/real_time_data")
 async def get_real_time_data(
@@ -88,32 +93,30 @@ async def get_real_time_data(
 
 
 @app.get("/get_building_plan")
-async def get_building_plan() -> Dict[str, set[str]]:
-    FLOORS = ["Floor1", "Floor2", "Floor3"]
-
-    latest_data = await get_real_time_data(RealTimeDataRequest())
-
-    building_plan = {}
-    set_locations = set()
-
-    for (device, sensor_type, location) in latest_data:
-        if location not in set_locations:
-            floor = random.choice(FLOORS)
-            set_locations.add(location)
-        else:
-            continue
-
-        if floor not in building_plan:
-            building_plan[floor] = set()
-
-        building_plan[floor].add(location)
-
+async def get_building_plan() -> Dict[int, set[str]]:
     return building_plan
 
 
 @app.get("/available_sensors")
 async def get_available_sensors(location: str) -> list[str]:
     return list(available_sensors[location])
+
+
+def init_construct(init_data: list[DataResponse]):
+    global available_sensors
+    global building_plan
+
+    for data_response in init_data:
+        if data_response.location not in available_sensors:
+            available_sensors[data_response.location] = set()
+
+        if data_response.sensor_type != "motion":
+            available_sensors[data_response.location].add(data_response.sensor_type)
+
+        if data_response.floor not in building_plan:
+            building_plan[data_response.floor] = set()
+
+        building_plan[data_response.floor].add(data_response.location)
 
 
 if __name__ == "__main__":
@@ -127,5 +130,10 @@ if __name__ == "__main__":
                 "secret": "your-secret-key"
             },
         )
+
+    with httpx.Client() as client:
+        response = client.get(os.getenv("HIST_SENSOR_DATA"))
+        parsed_sensor_data = [DataResponse.model_validate(res) for res in response.json()] if response.json() else []
+        init_construct(parsed_sensor_data)
 
     uvicorn.run(app, host=os.getenv("HOST"), port=int(os.getenv("PORT")))
