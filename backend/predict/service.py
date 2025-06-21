@@ -65,6 +65,7 @@ async def get_last_prediction(
             location=location,
             latitude=0.0,
             longitude=0.0,
+            floor=0
         ))
 
     return predicted_data
